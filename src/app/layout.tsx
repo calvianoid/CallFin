@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/lib/i18n/context";
+import { DemoModeBanner } from "@/components/layout/DemoModeBanner";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -36,7 +37,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider>
-          <LocaleProvider>{children}</LocaleProvider>
+          <LocaleProvider>
+            <DemoModeBanner />
+            {children}
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>
