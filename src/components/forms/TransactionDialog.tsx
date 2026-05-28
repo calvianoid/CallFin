@@ -1,0 +1,176 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Transaction, TransactionType } from "@/types";
+import { useStore } from "@/lib/store";
+import { Sparkles } from "lucide-react";
+
+interface TransactionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  initial?: Partial<Transaction>;
+  fromAI?: boolean;
+  onSaved?: (tx: Transaction) => void;
+}
+
+export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved }: TransactionDialogProps) {
+  const { wallets, categories, addTransaction } = useStore();
+
+  const [type, setType] = useState<TransactionType>(initial?.type || "expense");
+  const [amount, setAmount] = useState<string>(initial?.amount ? String(initial.amount) : "");
+
+  // Categories filtered by current transaction type (no internal categories)
+  const availableCategories = categories.filter((c) => c.type === type && !c.isInternal);
+  const defaultCat = (t: TransactionType) =>
+    categories.find((c) => c.type === t && !c.isInternal)?.name || "";
+
+  const [category, setCategory] = useState(initial?.category || defaultCat(initial?.type || "expense"));
+  const [walletId, setWalletId] = useState(initial?.wallet_id || wallets[0]?.id || "");
+  const [description, setDescription] = useState(initial?.description || "");
+  const [date, setDate] = useState(initial?.date || new Date().toISOString().split("T")[0]);
+
+  useEffect(() => {
+    if (open) {
+      const initType = initial?.type || "expense";
+      setType(initType);
+      setAmount(initial?.amount ? String(initial.amount) : "");
+      setCategory(initial?.category || defaultCat(initType));
+      setWalletId(initial?.wallet_id || wallets[0]?.id || "");
+      setDescription(initial?.description || "");
+      setDate(initial?.date || new Date().toISOString().split("T")[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial, wallets]);
+
+  // When user toggles type, reset category to a valid one for the new type
+  useEffect(() => {
+    if (!open) return;
+    if (!availableCategories.some((c) => c.name === category)) {
+      setCategory(availableCategories[0]?.name || "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [type, open]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const numAmount = parseFloat(amount);
+    if (!numAmount || !walletId) return;
+
+    const tx = addTransaction({
+      type,
+      amount: numAmount,
+      category,
+      description: description || category,
+      date,
+      wallet_id: walletId,
+    });
+
+    onSaved?.(tx);
+    onOpenChange(false);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {fromAI && <Sparkles className="h-4 w-4 text-primary" />}
+            {fromAI ? "Konfirmasi Transaksi dari AI" : "Tambah Transaksi"}
+          </DialogTitle>
+          <DialogDescription>
+            {fromAI
+              ? "AI berhasil membaca transaksimu. Cek dan ubah jika perlu, lalu konfirmasi."
+              : "Catat pemasukan atau pengeluaranmu secara manual."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Tabs value={type} onValueChange={(v) => setType(v as TransactionType)}>
+            <TabsList className="grid grid-cols-2 w-full">
+              <TabsTrigger value="expense">📉 Pengeluaran</TabsTrigger>
+              <TabsTrigger value="income">📈 Pemasukan</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="space-y-2">
+            <Label htmlFor="amount">Jumlah (Rp)</Label>
+            <Input
+              id="amount"
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="50000"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Kategori</Label>
+              <Select value={category} onValueChange={(v) => v && setCategory(v)}>
+                <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
+                <SelectContent>
+                  {availableCategories.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      <span className="mr-1">{c.icon}</span> {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Dompet</Label>
+              <Select value={walletId} onValueChange={(v) => v && setWalletId(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {wallets.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      <span className="mr-1">{w.icon}</span> {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Deskripsi</Label>
+            <Input
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Contoh: Makan siang di warung Padang"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="date">Tanggal</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Batal
+            </Button>
+            <Button type="submit">
+              {fromAI ? "Konfirmasi & Simpan" : "Simpan"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
