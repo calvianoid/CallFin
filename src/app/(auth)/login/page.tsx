@@ -1,19 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Loader2 } from "lucide-react";
+import { TrendingUp, Loader2, MailCheck } from "lucide-react";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+
+  // After register with email-confirmation-required, register page redirects here
+  // with ?confirm=<email> — show a friendly hint instead of an error.
+  useEffect(() => {
+    const confirm = searchParams.get("confirm");
+    if (confirm) {
+      setEmail(confirm);
+      setInfo(`Akun ${confirm} berhasil dibuat. Klik link konfirmasi di email-mu, lalu kembali ke sini untuk masuk.`);
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -62,6 +82,12 @@ export default function LoginPage() {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {info && !error && (
+            <div className="flex items-start gap-2 bg-primary/10 text-primary text-sm rounded-lg px-3 py-2">
+              <MailCheck className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{info}</span>
+            </div>
+          )}
           {error && (
             <div className="bg-destructive/10 text-destructive text-sm rounded-lg px-3 py-2">
               {error}

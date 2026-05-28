@@ -49,6 +49,11 @@ export default function RegisterPage() {
         setLoading(false);
         return;
       }
+      if (res && "pendingConfirmation" in res && res.pendingConfirmation) {
+        // Supabase requires email confirmation — send user to login with hint
+        router.push(`/login?confirm=${encodeURIComponent(form.email)}`);
+        return;
+      }
       router.push("/");
     } catch {
       // Supabase not configured → demo passthrough

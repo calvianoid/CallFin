@@ -43,9 +43,10 @@ export default function SettingsPage() {
   }, [storeProfile]);
 
   function handleSaveProfile() {
+    // Email is intentionally NOT in this payload — changing the auth email is a
+    // separate, verification-gated flow (see Supabase sb.auth.updateUser({email})).
     updateProfile({
       full_name: profile.fullName,
-      email: profile.email,
       phone: profile.phone || null,
     });
   }
@@ -104,7 +105,14 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>{t("settings.email")}</Label>
-                  <Input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+                  <Input
+                    type="email"
+                    value={profile.email}
+                    readOnly
+                    className="bg-muted cursor-not-allowed"
+                    title="Email akun tidak bisa diubah di sini. Hubungi support."
+                  />
+                  <p className="text-[10px] text-muted-foreground">Email akun adalah identitas login & tidak bisa diubah di sini.</p>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t("settings.phone")}</Label>
