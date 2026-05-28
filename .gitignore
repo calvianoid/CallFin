@@ -43,6 +43,9 @@ next-env.d.ts
 # claude
 .claude/
 
-# supabase
-supabase/
+# supabase — ignore CLI runtime state but keep migrations + setup + docs versioned
+supabase/.branches/
+supabase/.temp/
+supabase/.tmp/
+supabase/seed.sql
 .supabase/

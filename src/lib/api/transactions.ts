@@ -58,23 +58,14 @@ export async function createTransaction(input: {
 
 export async function deleteTransaction(id: string): Promise<void> {
   const sb = await getSupabaseServer();
-  // The trigger handles wallet balance reversal for non-transfer/non-goal txs.
-  // For transfer/goal we currently don't support delete — UI also doesn't expose it.
-  const { data: tx, error: fetchErr } = await sb
-    .from("transactions")
-    .select("type, goal_id, transfer_to_wallet_id")
-    .eq("id", id)
-    .single();
-  if (fetchErr) throw fetchErr;
-  const row = tx as unknown as { type: string; goal_id: string | null };
-  if (row.type === "transfer" || row.goal_id) {
-    throw new Error("Transfer and goal contribution transactions can't be deleted from this app yet");
-  }
-
+  // The SQL trigger apply_transaction() handles balance/goal reversal for all
+  // transaction types (regular expense/income, transfer, goal contribution).
   const { error } = await sb.from("transactions").delete().eq("id", id);
   if (error) throw error;
 
   revalidatePath("/transactions");
   revalidatePath("/budgets");
+  revalidatePath("/goals");
+  revalidatePath("/wallets");
   revalidatePath("/");
 }
