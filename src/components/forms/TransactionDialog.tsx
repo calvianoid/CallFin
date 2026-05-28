@@ -1,11 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/types";
 import { useStore } from "@/lib/store";
@@ -19,21 +33,37 @@ interface TransactionDialogProps {
   onSaved?: (tx: Transaction) => void;
 }
 
-export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved }: TransactionDialogProps) {
+export function TransactionDialog({
+  open,
+  onOpenChange,
+  initial,
+  fromAI,
+  onSaved,
+}: TransactionDialogProps) {
   const { wallets, categories, addTransaction } = useStore();
 
   const [type, setType] = useState<TransactionType>(initial?.type || "expense");
-  const [amount, setAmount] = useState<string>(initial?.amount ? String(initial.amount) : "");
+  const [amount, setAmount] = useState<string>(
+    initial?.amount ? String(initial.amount) : "",
+  );
 
   // Categories filtered by current transaction type (no internal categories)
-  const availableCategories = categories.filter((c) => c.type === type && !c.isInternal);
+  const availableCategories = categories.filter(
+    (c) => c.type === type && !c.isInternal,
+  );
   const defaultCat = (t: TransactionType) =>
     categories.find((c) => c.type === t && !c.isInternal)?.name || "";
 
-  const [category, setCategory] = useState(initial?.category || defaultCat(initial?.type || "expense"));
-  const [walletId, setWalletId] = useState(initial?.wallet_id || wallets[0]?.id || "");
+  const [category, setCategory] = useState(
+    initial?.category || defaultCat(initial?.type || "expense"),
+  );
+  const [walletId, setWalletId] = useState(
+    initial?.wallet_id || wallets[0]?.id || "",
+  );
   const [description, setDescription] = useState(initial?.description || "");
-  const [date, setDate] = useState(initial?.date || new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(
+    initial?.date || new Date().toISOString().split("T")[0],
+  );
 
   useEffect(() => {
     if (open) {
@@ -41,7 +71,12 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
       setType(initType);
       setAmount(initial?.amount ? String(initial.amount) : "");
       setCategory(initial?.category || defaultCat(initType));
-      setWalletId(initial?.wallet_id || wallets[0]?.id || "");
+      // Only use initial wallet_id if it exists in the wallets list
+      const validWalletId =
+        initial?.wallet_id && wallets.some((w) => w.id === initial.wallet_id)
+          ? initial.wallet_id
+          : wallets[0]?.id || "";
+      setWalletId(validWalletId);
       setDescription(initial?.description || "");
       setDate(initial?.date || new Date().toISOString().split("T")[0]);
     }
@@ -91,7 +126,10 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs value={type} onValueChange={(v) => setType(v as TransactionType)}>
+          <Tabs
+            value={type}
+            onValueChange={(v) => setType(v as TransactionType)}
+          >
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="expense">📉 Pengeluaran</TabsTrigger>
               <TabsTrigger value="income">📈 Pemasukan</TabsTrigger>
@@ -100,12 +138,11 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
 
           <div className="space-y-2">
             <Label htmlFor="amount">Jumlah (Rp)</Label>
-            <Input
+            <CurrencyInput
               id="amount"
-              type="number"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="50000"
+              onValueChange={setAmount}
+              placeholder="50.000"
               required
               autoFocus
             />
@@ -114,8 +151,13 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Kategori</Label>
-              <Select value={category} onValueChange={(v) => v && setCategory(v)}>
-                <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
+              <Select
+                value={category}
+                onValueChange={(v) => v && setCategory(v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
                 <SelectContent>
                   {availableCategories.map((c) => (
                     <SelectItem key={c.id} value={c.name}>
@@ -128,12 +170,28 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
 
             <div className="space-y-2">
               <Label>Dompet</Label>
-              <Select value={walletId} onValueChange={(v) => v && setWalletId(v)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={walletId}
+                onValueChange={(v) => v && setWalletId(v)}
+              >
+                <SelectTrigger>
+                  {(() => {
+                    const w = wallets.find((w) => w.id === walletId);
+                    return w ? (
+                      <span>
+                        {w.icon ? <span className="mr-1">{w.icon}</span> : null}
+                        {w.name}
+                      </span>
+                    ) : (
+                      <SelectValue placeholder="Pilih dompet" />
+                    );
+                  })()}
+                </SelectTrigger>
                 <SelectContent>
                   {wallets.map((w) => (
                     <SelectItem key={w.id} value={w.id}>
-                      <span className="mr-1">{w.icon}</span> {w.name}
+                      {w.icon ? <span className="mr-1">{w.icon}</span> : null}{" "}
+                      {w.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -162,7 +220,11 @@ export function TransactionDialog({ open, onOpenChange, initial, fromAI, onSaved
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Batal
             </Button>
             <Button type="submit">

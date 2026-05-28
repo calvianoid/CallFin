@@ -1,11 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Wallet, WalletType } from "@/types";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
@@ -34,13 +48,19 @@ const COLOR_OPTIONS = [
   "bg-orange-500",
 ];
 
-export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps) {
+export function WalletDialog({
+  open,
+  onOpenChange,
+  initial,
+}: WalletDialogProps) {
   const { addWallet, updateWallet } = useStore();
   const isEdit = !!initial;
 
   const [name, setName] = useState(initial?.name || "");
   const [type, setType] = useState<WalletType>(initial?.type || "cash");
-  const [balance, setBalance] = useState<string>(initial?.balance ? String(initial.balance) : "0");
+  const [balance, setBalance] = useState<string>(
+    initial?.balance ? String(initial.balance) : "0",
+  );
   const [color, setColor] = useState(initial?.color || COLOR_OPTIONS[0]);
 
   useEffect(() => {
@@ -57,7 +77,13 @@ export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps)
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name) return;
-    const payload = { name, type, balance: parseFloat(balance) || 0, color, icon };
+    const payload = {
+      name,
+      type,
+      balance: parseFloat(balance) || 0,
+      color,
+      icon,
+    };
 
     if (isEdit && initial) {
       updateWallet(initial.id, payload);
@@ -80,13 +106,23 @@ export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps)
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="name">Nama Dompet</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Contoh: BCA, OVO, Tunai" required autoFocus />
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: BCA, OVO, Tunai"
+              required
+              autoFocus
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Tipe</Label>
-              <Select value={type} onValueChange={(v) => setType(v as WalletType)}>
+              <Select
+                value={type}
+                onValueChange={(v) => setType(v as WalletType)}
+              >
                 <SelectTrigger>
                   <SelectValue>
                     {(v) => {
@@ -106,7 +142,12 @@ export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps)
             </div>
             <div className="space-y-2">
               <Label htmlFor="balance">Saldo (Rp)</Label>
-              <Input id="balance" type="number" value={balance} onChange={(e) => setBalance(e.target.value)} placeholder="0" />
+              <CurrencyInput
+                id="balance"
+                value={balance}
+                onValueChange={setBalance}
+                placeholder="0"
+              />
             </div>
           </div>
 
@@ -121,7 +162,9 @@ export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps)
                   className={cn(
                     "w-8 h-8 rounded-full transition-all",
                     c,
-                    color === c ? "ring-2 ring-offset-2 ring-foreground scale-110" : "hover:scale-105"
+                    color === c
+                      ? "ring-2 ring-offset-2 ring-foreground scale-110"
+                      : "hover:scale-105",
                   )}
                 />
               ))}
@@ -129,7 +172,13 @@ export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps)
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Batal
+            </Button>
             <Button type="submit">{isEdit ? "Simpan" : "Tambah"}</Button>
           </DialogFooter>
         </form>

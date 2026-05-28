@@ -1,8 +1,21 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  ReactNode,
+} from "react";
 import { Transaction, Budget, Goal, Wallet, Category } from "@/types";
-import { mockTransactions, mockBudgets, mockGoals, mockWallets, DEFAULT_CATEGORIES } from "./mock-data";
+import {
+  mockTransactions,
+  mockBudgets,
+  mockGoals,
+  mockWallets,
+  DEFAULT_CATEGORIES,
+} from "./mock-data";
 
 const SUPABASE_READY =
   typeof process !== "undefined" &&
@@ -36,11 +49,26 @@ interface StoreContextValue {
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
   /** Move money from a wallet into a goal — updates wallet, goal, and records a transaction. */
-  addGoalContribution: (goalId: string, walletId: string, amount: number, note?: string) => void;
+  addGoalContribution: (
+    goalId: string,
+    walletId: string,
+    amount: number,
+    note?: string,
+  ) => void;
   /** Move money between two wallets. Updates both balances and records ONE transaction with type "transfer". */
-  addTransfer: (fromWalletId: string, toWalletId: string, amount: number, note?: string) => void;
-  addCategory: (c: Omit<Category, "id" | "user_id" | "isDefault" | "isInternal">) => void;
-  updateCategory: (id: string, patch: Partial<Omit<Category, "id" | "user_id">>) => void;
+  addTransfer: (
+    fromWalletId: string,
+    toWalletId: string,
+    amount: number,
+    note?: string,
+  ) => void;
+  addCategory: (
+    c: Omit<Category, "id" | "user_id" | "isDefault" | "isInternal">,
+  ) => void;
+  updateCategory: (
+    id: string,
+    patch: Partial<Omit<Category, "id" | "user_id">>,
+  ) => void;
   deleteCategory: (id: string) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
 }
@@ -53,12 +81,24 @@ function makeId() {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [wallets, setWallets] = useState<Wallet[]>(SUPABASE_READY ? [] : mockWallets);
-  const [transactions, setTransactions] = useState<Transaction[]>(SUPABASE_READY ? [] : mockTransactions);
-  const [budgets, setBudgets] = useState<Budget[]>(SUPABASE_READY ? [] : mockBudgets);
+  const [wallets, setWallets] = useState<Wallet[]>(
+    SUPABASE_READY ? [] : mockWallets,
+  );
+  const [transactions, setTransactions] = useState<Transaction[]>(
+    SUPABASE_READY ? [] : mockTransactions,
+  );
+  const [budgets, setBudgets] = useState<Budget[]>(
+    SUPABASE_READY ? [] : mockBudgets,
+  );
   const [goals, setGoals] = useState<Goal[]>(SUPABASE_READY ? [] : mockGoals);
   const [categories, setCategories] = useState<Category[]>(() =>
-    SUPABASE_READY ? [] : DEFAULT_CATEGORIES.map((c, i) => ({ ...c, id: `cat-${i}`, user_id: "u1" }))
+    SUPABASE_READY
+      ? []
+      : DEFAULT_CATEGORIES.map((c, i) => ({
+          ...c,
+          id: `cat-${i}`,
+          user_id: "u1",
+        })),
   );
 
   // Hydrate from Supabase on mount. Each table loads independently so a missing
@@ -78,9 +118,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         import("./api/goals"),
         import("./api/categories"),
       ]);
-      const [{ getProfile }, { listWallets }, { listTransactions }, { listBudgets }, { listGoals }, { listCategories }] = apis;
+      const [
+        { getProfile },
+        { listWallets },
+        { listTransactions },
+        { listBudgets },
+        { listGoals },
+        { listCategories },
+      ] = apis;
 
-      async function safe<T>(label: string, fn: () => Promise<T>, fallback: T): Promise<T> {
+      async function safe<T>(
+        label: string,
+        fn: () => Promise<T>,
+        fallback: T,
+      ): Promise<T> {
         try {
           return await fn();
         } catch (err) {
@@ -93,14 +144,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         safe("profile", getProfile, null as unknown as UserProfile | null),
         safe("wallets", listWallets, [] as Wallet[]),
         safe("transactions", listTransactions, [] as Transaction[]),
-        safe("budgets", () => listBudgets(new Date().toISOString().slice(0, 7)), [] as Budget[]),
+        safe(
+          "budgets",
+          () => listBudgets(new Date().toISOString().slice(0, 7)),
+          [] as Budget[],
+        ),
         safe("goals", listGoals, [] as Goal[]),
         safe("categories", listCategories, [] as Category[]),
       ]);
 
       if (cancelled) return;
       if (p) {
-        const row = p as { id: string; full_name: string; email: string; phone: string | null; avatar_url: string | null };
+        const row = p as {
+          id: string;
+          full_name: string;
+          email: string;
+          phone: string | null;
+          avatar_url: string | null;
+        };
         setProfile({
           id: row.id,
           full_name: row.full_name,
@@ -116,7 +177,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setCategories(cs);
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const updateProfileLocal = useCallback((patch: Partial<UserProfile>) => {
@@ -128,157 +191,398 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const addTransfer = useCallback((fromWalletId: string, toWalletId: string, amount: number, note?: string) => {
-    if (fromWalletId === toWalletId || amount <= 0) return;
+  const addTransfer = useCallback(
+    (
+      fromWalletId: string,
+      toWalletId: string,
+      amount: number,
+      note?: string,
+    ) => {
+      if (fromWalletId === toWalletId || amount <= 0) return;
 
-    let fromName = "";
-    let toName = "";
+      let fromName = "";
+      let toName = "";
 
-    setWallets((prev) => {
-      const fromW = prev.find((w) => w.id === fromWalletId);
-      const toW = prev.find((w) => w.id === toWalletId);
-      if (fromW) fromName = fromW.name;
-      if (toW) toName = toW.name;
-      return prev.map((w) => {
-        if (w.id === fromWalletId) return { ...w, balance: w.balance - amount };
-        if (w.id === toWalletId) return { ...w, balance: w.balance + amount };
-        return w;
+      setWallets((prev) => {
+        const fromW = prev.find((w) => w.id === fromWalletId);
+        const toW = prev.find((w) => w.id === toWalletId);
+        if (fromW) fromName = fromW.name;
+        if (toW) toName = toW.name;
+        return prev.map((w) => {
+          if (w.id === fromWalletId)
+            return { ...w, balance: w.balance - amount };
+          if (w.id === toWalletId) return { ...w, balance: w.balance + amount };
+          return w;
+        });
       });
-    });
 
-    const newTx: Transaction = {
-      id: makeId(),
-      user_id: "u1",
-      wallet_id: fromWalletId,
-      transfer_to_wallet_id: toWalletId,
-      type: "transfer",
-      amount,
-      category: "Transfer",
-      description: note || `Transfer ke ${toName || "dompet lain"}`,
-      date: new Date().toISOString().split("T")[0],
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-    // intentionally don't touch budgets — transfers aren't expenses
-    void fromName; // referenced for debugging if needed
-  }, []);
+      const newTx: Transaction = {
+        id: makeId(),
+        user_id: "u1",
+        wallet_id: fromWalletId,
+        transfer_to_wallet_id: toWalletId,
+        type: "transfer",
+        amount,
+        category: "Transfer",
+        description: note || `Transfer ke ${toName || "dompet lain"}`,
+        date: new Date().toISOString().split("T")[0],
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+      // intentionally don't touch budgets — transfers aren't expenses
+      void fromName; // referenced for debugging if needed
 
-  const addCategory = useCallback((c: Omit<Category, "id" | "user_id" | "isDefault" | "isInternal">) => {
-    setCategories((prev) => [...prev, { ...c, id: makeId(), user_id: "u1" }]);
-  }, []);
+      if (SUPABASE_READY) {
+        import("./api/wallets")
+          .then((m) =>
+            m.transferBetweenWallets({
+              from_wallet_id: fromWalletId,
+              to_wallet_id: toWalletId,
+              amount,
+              description: note,
+            }),
+          )
+          .catch((err) => console.error("[store] addTransfer failed:", err));
+      }
+    },
+    [],
+  );
 
-  const updateCategory = useCallback((id: string, patch: Partial<Omit<Category, "id" | "user_id">>) => {
-    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
-  }, []);
+  const addCategory = useCallback(
+    (c: Omit<Category, "id" | "user_id" | "isDefault" | "isInternal">) => {
+      const tempId = makeId();
+      setCategories((prev) => [...prev, { ...c, id: tempId, user_id: "u1" }]);
+
+      if (SUPABASE_READY) {
+        import("./api/categories")
+          .then((m) =>
+            m.createCategory({
+              name: c.name,
+              type: c.type,
+              color: c.color,
+              icon: c.icon,
+            }),
+          )
+          .then((created) => {
+            setCategories((prev) =>
+              prev.map((cat) => (cat.id === tempId ? created : cat)),
+            );
+          })
+          .catch((err) => console.error("[store] addCategory failed:", err));
+      }
+    },
+    [],
+  );
+
+  const updateCategory = useCallback(
+    (id: string, patch: Partial<Omit<Category, "id" | "user_id">>) => {
+      setCategories((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, ...patch } : c)),
+      );
+
+      if (SUPABASE_READY) {
+        import("./api/categories")
+          .then((m) => m.updateCategory(id, patch))
+          .catch((err) => console.error("[store] updateCategory failed:", err));
+      }
+    },
+    [],
+  );
 
   const deleteCategory = useCallback((id: string) => {
     setCategories((prev) => prev.filter((c) => c.id !== id));
+
+    if (SUPABASE_READY) {
+      import("./api/categories")
+        .then((m) => m.deleteCategory(id))
+        .catch((err) => console.error("[store] deleteCategory failed:", err));
+    }
   }, []);
 
   const addWallet = useCallback((w: Omit<Wallet, "id" | "user_id">) => {
-    setWallets((prev) => [...prev, { ...w, id: makeId(), user_id: "u1" }]);
+    const tempId = makeId();
+    setWallets((prev) => [...prev, { ...w, id: tempId, user_id: "u1" }]);
+
+    if (SUPABASE_READY) {
+      import("./api/wallets")
+        .then((m) =>
+          m.createWallet({
+            name: w.name,
+            type: w.type,
+            balance: w.balance,
+            color: w.color,
+            icon: w.icon,
+          }),
+        )
+        .then((created) => {
+          setWallets((prev) =>
+            prev.map((wallet) => (wallet.id === tempId ? created : wallet)),
+          );
+        })
+        .catch((err) => console.error("[store] addWallet failed:", err));
+    }
   }, []);
 
   const updateWallet = useCallback((id: string, patch: Partial<Wallet>) => {
-    setWallets((prev) => prev.map((w) => (w.id === id ? { ...w, ...patch } : w)));
+    setWallets((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, ...patch } : w)),
+    );
+
+    if (SUPABASE_READY) {
+      import("./api/wallets")
+        .then((m) => m.updateWallet(id, patch))
+        .catch((err) => console.error("[store] updateWallet failed:", err));
+    }
   }, []);
 
   const deleteWallet = useCallback((id: string) => {
     setWallets((prev) => prev.filter((w) => w.id !== id));
-  }, []);
 
-  const addTransaction = useCallback((t: Omit<Transaction, "id" | "user_id">) => {
-    const newTx: Transaction = { ...t, id: makeId(), user_id: "u1" };
-    setTransactions((prev) => [newTx, ...prev]);
-
-    // Update wallet balance
-    setWallets((prev) =>
-      prev.map((w) =>
-        w.id === t.wallet_id
-          ? { ...w, balance: t.type === "income" ? w.balance + t.amount : w.balance - t.amount }
-          : w
-      )
-    );
-
-    // Update budget spent — but only for real expenses, not goal contributions or transfers
-    if (t.type === "expense" && !t.goal_id && !t.transfer_to_wallet_id) {
-      setBudgets((prev) =>
-        prev.map((b) =>
-          b.category === t.category ? { ...b, spent: (b.spent || 0) + t.amount } : b
-        )
-      );
+    if (SUPABASE_READY) {
+      import("./api/wallets")
+        .then((m) => m.deleteWallet(id))
+        .catch((err) => console.error("[store] deleteWallet failed:", err));
     }
-
-    return newTx;
   }, []);
+
+  const addTransaction = useCallback(
+    (t: Omit<Transaction, "id" | "user_id">) => {
+      const tempId = makeId();
+      const newTx: Transaction = { ...t, id: tempId, user_id: "u1" };
+      setTransactions((prev) => [newTx, ...prev]);
+
+      // Update wallet balance
+      setWallets((prev) =>
+        prev.map((w) =>
+          w.id === t.wallet_id
+            ? {
+                ...w,
+                balance:
+                  t.type === "income"
+                    ? w.balance + t.amount
+                    : w.balance - t.amount,
+              }
+            : w,
+        ),
+      );
+
+      // Update budget spent — but only for real expenses, not goal contributions or transfers
+      if (t.type === "expense" && !t.goal_id && !t.transfer_to_wallet_id) {
+        setBudgets((prev) =>
+          prev.map((b) =>
+            b.category === t.category
+              ? { ...b, spent: (b.spent || 0) + t.amount }
+              : b,
+          ),
+        );
+      }
+
+      if (SUPABASE_READY) {
+        import("./api/transactions")
+          .then((m) =>
+            m.createTransaction({
+              wallet_id: t.wallet_id,
+              type: t.type as "income" | "expense",
+              amount: t.amount,
+              category: t.category,
+              description: t.description,
+              date: t.date,
+            }),
+          )
+          .then((created) => {
+            setTransactions((prev) =>
+              prev.map((tx) => (tx.id === tempId ? created : tx)),
+            );
+          })
+          .catch((err) => console.error("[store] addTransaction failed:", err));
+      }
+
+      return newTx;
+    },
+    [],
+  );
 
   const deleteTransaction = useCallback((id: string) => {
-    setTransactions((prev) => prev.filter((t) => t.id !== id));
+    setTransactions((prev) => {
+      const tx = prev.find((t) => t.id === id);
+      // Only call Supabase delete for regular transactions (not transfers/goal contributions)
+      if (SUPABASE_READY && tx && tx.type !== "transfer" && !tx.goal_id) {
+        import("./api/transactions")
+          .then((m) => m.deleteTransaction(id))
+          .catch((err) =>
+            console.error("[store] deleteTransaction failed:", err),
+          );
+      }
+      return prev.filter((t) => t.id !== id);
+    });
   }, []);
 
   const addBudget = useCallback((b: Omit<Budget, "id" | "user_id">) => {
-    setBudgets((prev) => [...prev, { ...b, id: makeId(), user_id: "u1" }]);
+    const tempId = makeId();
+    setBudgets((prev) => [...prev, { ...b, id: tempId, user_id: "u1" }]);
+
+    if (SUPABASE_READY) {
+      import("./api/budgets")
+        .then((m) =>
+          m.createBudget({
+            category: b.category,
+            limit_amount: b.limit_amount,
+            month_year: b.month_year,
+          }),
+        )
+        .then((created) => {
+          setBudgets((prev) =>
+            prev.map((budget) => (budget.id === tempId ? created : budget)),
+          );
+        })
+        .catch((err) => console.error("[store] addBudget failed:", err));
+    }
   }, []);
 
   const updateBudget = useCallback((id: string, patch: Partial<Budget>) => {
-    setBudgets((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
+    setBudgets((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    );
+
+    if (SUPABASE_READY) {
+      import("./api/budgets")
+        .then((m) =>
+          m.updateBudget(id, {
+            category: patch.category,
+            limit_amount: patch.limit_amount,
+          }),
+        )
+        .catch((err) => console.error("[store] updateBudget failed:", err));
+    }
   }, []);
 
   const deleteBudget = useCallback((id: string) => {
     setBudgets((prev) => prev.filter((b) => b.id !== id));
+
+    if (SUPABASE_READY) {
+      import("./api/budgets")
+        .then((m) => m.deleteBudget(id))
+        .catch((err) => console.error("[store] deleteBudget failed:", err));
+    }
   }, []);
 
   const addGoal = useCallback((g: Omit<Goal, "id" | "user_id">) => {
-    setGoals((prev) => [...prev, { ...g, id: makeId(), user_id: "u1" }]);
+    const tempId = makeId();
+    setGoals((prev) => [...prev, { ...g, id: tempId, user_id: "u1" }]);
+
+    if (SUPABASE_READY) {
+      import("./api/goals")
+        .then((m) =>
+          m.createGoal({
+            goal_name: g.goal_name,
+            target_amount: g.target_amount,
+            current_amount: g.current_amount,
+            deadline: g.deadline,
+          }),
+        )
+        .then((created) => {
+          setGoals((prev) =>
+            prev.map((goal) => (goal.id === tempId ? created : goal)),
+          );
+        })
+        .catch((err) => console.error("[store] addGoal failed:", err));
+    }
   }, []);
 
   const updateGoal = useCallback((id: string, patch: Partial<Goal>) => {
     setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+
+    if (SUPABASE_READY) {
+      import("./api/goals")
+        .then((m) => m.updateGoal(id, patch))
+        .catch((err) => console.error("[store] updateGoal failed:", err));
+    }
   }, []);
 
   const deleteGoal = useCallback((id: string) => {
     setGoals((prev) => prev.filter((g) => g.id !== id));
+
+    if (SUPABASE_READY) {
+      import("./api/goals")
+        .then((m) => m.deleteGoal(id))
+        .catch((err) => console.error("[store] deleteGoal failed:", err));
+    }
   }, []);
 
-  const addGoalContribution = useCallback((goalId: string, walletId: string, amount: number, note?: string) => {
-    let goalName = "Goal";
-    setGoals((prev) => {
-      const goal = prev.find((g) => g.id === goalId);
-      if (goal) goalName = goal.goal_name;
-      return prev.map((g) =>
-        g.id === goalId ? { ...g, current_amount: g.current_amount + amount } : g
+  const addGoalContribution = useCallback(
+    (goalId: string, walletId: string, amount: number, note?: string) => {
+      let goalName = "Goal";
+      setGoals((prev) => {
+        const goal = prev.find((g) => g.id === goalId);
+        if (goal) goalName = goal.goal_name;
+        return prev.map((g) =>
+          g.id === goalId
+            ? { ...g, current_amount: g.current_amount + amount }
+            : g,
+        );
+      });
+
+      const newTx: Transaction = {
+        id: makeId(),
+        user_id: "u1",
+        wallet_id: walletId,
+        type: "expense",
+        amount,
+        category: "Tabungan",
+        description: note || `Setor ke goal: ${goalName}`,
+        date: new Date().toISOString().split("T")[0],
+        goal_id: goalId,
+      };
+      setTransactions((prev) => [newTx, ...prev]);
+
+      setWallets((prev) =>
+        prev.map((w) =>
+          w.id === walletId ? { ...w, balance: w.balance - amount } : w,
+        ),
       );
-    });
 
-    const newTx: Transaction = {
-      id: makeId(),
-      user_id: "u1",
-      wallet_id: walletId,
-      type: "expense",
-      amount,
-      category: "Tabungan",
-      description: note || `Setor ke goal: ${goalName}`,
-      date: new Date().toISOString().split("T")[0],
-      goal_id: goalId,
-    };
-    setTransactions((prev) => [newTx, ...prev]);
-
-    setWallets((prev) =>
-      prev.map((w) => (w.id === walletId ? { ...w, balance: w.balance - amount } : w))
-    );
-  }, []);
+      if (SUPABASE_READY) {
+        import("./api/goals")
+          .then((m) =>
+            m.contributeToGoal({
+              goal_id: goalId,
+              wallet_id: walletId,
+              amount,
+              note,
+            }),
+          )
+          .catch((err) =>
+            console.error("[store] addGoalContribution failed:", err),
+          );
+      }
+    },
+    [],
+  );
 
   return (
     <StoreContext.Provider
       value={{
         profile,
-        wallets, transactions, budgets, goals, categories,
-        addWallet, updateWallet, deleteWallet,
-        addTransaction, deleteTransaction,
-        addBudget, updateBudget, deleteBudget,
-        addGoal, updateGoal, deleteGoal,
+        wallets,
+        transactions,
+        budgets,
+        goals,
+        categories,
+        addWallet,
+        updateWallet,
+        deleteWallet,
+        addTransaction,
+        deleteTransaction,
+        addBudget,
+        updateBudget,
+        deleteBudget,
+        addGoal,
+        updateGoal,
+        deleteGoal,
         addGoalContribution,
         addTransfer,
-        addCategory, updateCategory, deleteCategory,
+        addCategory,
+        updateCategory,
+        deleteCategory,
         updateProfile: updateProfileLocal,
       }}
     >
