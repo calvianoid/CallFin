@@ -151,6 +151,35 @@
     display: none !important;
   }
 
+  /* CRITICAL — undo the app shell's viewport-bound scroll container so the
+     document flows naturally and the browser can paginate. Without this the
+     print captures only one viewport-height of content. */
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .h-screen,
+  .h-full,
+  .min-h-0,
+  .min-h-screen {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-y-scroll,
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+  /* Convert the flex shell into a stacking flow so content paginates */
+  body > div,
+  main,
+  main > div {
+    display: block !important;
+    flex: none !important;
+  }
+
   /* Reset background to white & remove all dark variants */
   html,
   body,
