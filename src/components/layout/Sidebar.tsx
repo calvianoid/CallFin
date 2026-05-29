@@ -14,6 +14,7 @@ import {
   LogOut,
   Tag,
   Wallet as WalletIcon,
+  Upload,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -21,7 +22,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { useStore } from "@/lib/store";
 
-const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey }[] = [
+const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey; label?: string }[] = [
   { href: "/", icon: MessageSquare, key: "nav.dashboard" },
   { href: "/wallets", icon: WalletIcon, key: "nav.wallets" },
   { href: "/transactions", icon: List, key: "nav.transactions" },
@@ -29,6 +30,7 @@ const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey 
   { href: "/goals", icon: Target, key: "nav.goals" },
   { href: "/categories", icon: Tag, key: "nav.categories" },
   { href: "/reports", icon: FileText, key: "nav.reports" },
+  { href: "/import", icon: Upload, key: "nav.dashboard", label: "Import" },
 ];
 
 interface SidebarProps {
@@ -55,7 +57,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map(({ href, icon: Icon, key }) => {
+        {navItems.map(({ href, icon: Icon, key, label }) => {
           const active = pathname === href;
           return (
             <Link
@@ -70,7 +72,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               )}
             >
               <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
-              {t(key)}
+              {label ?? t(key)}
             </Link>
           );
         })}
