@@ -68,78 +68,74 @@ export const CATEGORY_COLOR_OPTIONS = [
 ];
 
 /**
- * Default category set, modeled after Money Lover's catalogue.
- * Money Lover's distinct Debt/Loan group is mapped into income/expense since
- * CallFin only has two transaction types.
+ * Default category set in English, inspired by Money Lover.
+ * Removed redundant entries (Streaming → folded into App Subscriptions,
+ * Concert/Lost → Entertainment & Other Expense, Cicilan → Pay Debt,
+ * Tagihan Terbayar removed as ambiguous).
  */
 export const DEFAULT_CATEGORIES: Omit<Category, "id" | "user_id">[] = [
-  // ─── Income ────────────────────────────────────────────────────────────────
-  { name: "Gaji",                type: "income", color: "bg-emerald-100 text-emerald-700", icon: "💼", isDefault: true },
+  // ─── Income (8) ────────────────────────────────────────────────────────────
+  { name: "Salary",              type: "income", color: "bg-emerald-100 text-emerald-700", icon: "💼", isDefault: true },
   { name: "Bonus",               type: "income", color: "bg-green-100 text-green-700",     icon: "🎁", isDefault: true },
   { name: "Freelance",           type: "income", color: "bg-cyan-100 text-cyan-700",       icon: "💻", isDefault: true },
-  { name: "Bunga Diterima",      type: "income", color: "bg-amber-100 text-amber-700",     icon: "💸", isDefault: true },
-  { name: "Reimburse",           type: "income", color: "bg-teal-100 text-teal-700",       icon: "🔄", isDefault: true },
+  { name: "Interest Income",     type: "income", color: "bg-amber-100 text-amber-700",     icon: "💸", isDefault: true },
+  { name: "Reimbursement",       type: "income", color: "bg-teal-100 text-teal-700",       icon: "🔄", isDefault: true },
   { name: "Angpau",              type: "income", color: "bg-red-100 text-red-700",         icon: "🧧", isDefault: true },
-  { name: "Pinjaman Diterima",   type: "income", color: "bg-blue-100 text-blue-700",       icon: "🏦", isDefault: true },
-  { name: "Tagihan Terbayar",    type: "income", color: "bg-violet-100 text-violet-700",   icon: "💰", isDefault: true },
-  { name: "Pemasukan Lainnya",   type: "income", color: "bg-gray-100 text-gray-700",       icon: "📥", isDefault: true },
+  { name: "Loan Received",       type: "income", color: "bg-blue-100 text-blue-700",       icon: "🏦", isDefault: true },
+  { name: "Other Income",        type: "income", color: "bg-gray-100 text-gray-700",       icon: "📥", isDefault: true },
 
-  // ─── Expense — daily essentials ────────────────────────────────────────────
-  { name: "Makanan & Minuman",   type: "expense", color: "bg-orange-100 text-orange-700",  icon: "🍔", isDefault: true },
-  { name: "Transportasi",        type: "expense", color: "bg-blue-100 text-blue-700",      icon: "🚗", isDefault: true },
-  { name: "Bensin",              type: "expense", color: "bg-amber-100 text-amber-700",    icon: "⛽", isDefault: true },
-  { name: "Parkir",              type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🅿️", isDefault: true },
-  { name: "Belanja",             type: "expense", color: "bg-pink-100 text-pink-700",      icon: "🛍️", isDefault: true },
-  { name: "Barang Pribadi",      type: "expense", color: "bg-rose-100 text-rose-700",      icon: "👕", isDefault: true },
+  // ─── Expense — daily (6) ───────────────────────────────────────────────────
+  { name: "Food & Drinks",       type: "expense", color: "bg-orange-100 text-orange-700",  icon: "🍔", isDefault: true },
+  { name: "Transportation",      type: "expense", color: "bg-blue-100 text-blue-700",      icon: "🚗", isDefault: true },
+  { name: "Fuel",                type: "expense", color: "bg-amber-100 text-amber-700",    icon: "⛽", isDefault: true },
+  { name: "Parking",             type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🅿️", isDefault: true },
+  { name: "Shopping",            type: "expense", color: "bg-pink-100 text-pink-700",      icon: "🛍️", isDefault: true },
+  { name: "Clothing & Accessories",type: "expense", color: "bg-rose-100 text-rose-700",    icon: "👕", isDefault: true },
 
-  // ─── Expense — bills & utilities ───────────────────────────────────────────
-  { name: "Sewa",                type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🏠", isDefault: true },
-  { name: "Tagihan Air",         type: "expense", color: "bg-sky-100 text-sky-700",        icon: "💧", isDefault: true },
-  { name: "Tagihan Listrik",     type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "⚡", isDefault: true },
-  { name: "Tagihan Internet",    type: "expense", color: "bg-cyan-100 text-cyan-700",      icon: "🌐", isDefault: true },
-  { name: "Pulsa & Telepon",     type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📞", isDefault: true },
-  { name: "Tagihan Lainnya",     type: "expense", color: "bg-red-100 text-red-700",        icon: "📄", isDefault: true },
+  // ─── Expense — bills & utilities (10) ──────────────────────────────────────
+  { name: "Rent",                type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🏠", isDefault: true },
+  { name: "Water Bill",          type: "expense", color: "bg-sky-100 text-sky-700",        icon: "💧", isDefault: true },
+  { name: "Electricity Bill",    type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "⚡", isDefault: true },
+  { name: "Internet Bill",       type: "expense", color: "bg-cyan-100 text-cyan-700",      icon: "🌐", isDefault: true },
+  { name: "Phone & Mobile",      type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📞", isDefault: true },
+  { name: "Other Bills",         type: "expense", color: "bg-red-100 text-red-700",        icon: "📄", isDefault: true },
   { name: "BPJS",                type: "expense", color: "bg-emerald-100 text-emerald-700",icon: "🏛️", isDefault: true },
-  { name: "Asuransi",            type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🛡️", isDefault: true },
-  { name: "Aplikasi Berlangganan",type: "expense",color: "bg-indigo-100 text-indigo-700",  icon: "📱", isDefault: true },
-  { name: "Streaming",           type: "expense", color: "bg-purple-100 text-purple-700",  icon: "📺", isDefault: true },
-  { name: "Biaya Admin",         type: "expense", color: "bg-slate-100 text-slate-700",    icon: "🧾", isDefault: true },
+  { name: "Insurance",           type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🛡️", isDefault: true },
+  { name: "App Subscriptions",   type: "expense", color: "bg-indigo-100 text-indigo-700",  icon: "📱", isDefault: true },
+  { name: "Admin Fees",          type: "expense", color: "bg-slate-100 text-slate-700",    icon: "🧾", isDefault: true },
 
-  // ─── Expense — home & vehicle ──────────────────────────────────────────────
-  { name: "Perawatan Rumah",     type: "expense", color: "bg-amber-100 text-amber-700",    icon: "🔧", isDefault: true },
-  { name: "Perawatan Kendaraan", type: "expense", color: "bg-zinc-100 text-zinc-700",      icon: "🚙", isDefault: true },
-  { name: "Perabotan",           type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🛋️", isDefault: true },
-  { name: "Layanan Rumah",       type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🧹", isDefault: true },
+  // ─── Expense — home & vehicle (6) ──────────────────────────────────────────
+  { name: "Home Maintenance",    type: "expense", color: "bg-amber-100 text-amber-700",    icon: "🔧", isDefault: true },
+  { name: "Vehicle Maintenance", type: "expense", color: "bg-zinc-100 text-zinc-700",      icon: "🚙", isDefault: true },
+  { name: "Furniture",           type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🛋️", isDefault: true },
+  { name: "Household Help",      type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🧹", isDefault: true },
   { name: "Laundry",             type: "expense", color: "bg-sky-100 text-sky-700",        icon: "🧺", isDefault: true },
-  { name: "Keamanan",            type: "expense", color: "bg-neutral-100 text-neutral-700",icon: "🔒", isDefault: true },
+  { name: "Security",            type: "expense", color: "bg-neutral-100 text-neutral-700",icon: "🔒", isDefault: true },
 
-  // ─── Expense — health, family, personal ────────────────────────────────────
-  { name: "Kesehatan",           type: "expense", color: "bg-green-100 text-green-700",    icon: "🏥", isDefault: true },
-  { name: "Kebugaran",           type: "expense", color: "bg-lime-100 text-lime-700",      icon: "🏋️", isDefault: true },
-  { name: "Kosmetik",            type: "expense", color: "bg-pink-100 text-pink-700",      icon: "💄", isDefault: true },
-  { name: "Potong Rambut",       type: "expense", color: "bg-orange-100 text-orange-700",  icon: "✂️", isDefault: true },
-  { name: "Pendidikan",          type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📚", isDefault: true },
-  { name: "Keluarga",            type: "expense", color: "bg-rose-100 text-rose-700",      icon: "👨‍👩‍👧", isDefault: true },
-  { name: "Hewan Peliharaan",    type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🐶", isDefault: true },
-  { name: "Hadiah & Donasi",     type: "expense", color: "bg-fuchsia-100 text-fuchsia-700",icon: "🎁", isDefault: true },
+  // ─── Expense — health, family, personal (8) ────────────────────────────────
+  { name: "Healthcare",          type: "expense", color: "bg-green-100 text-green-700",    icon: "🏥", isDefault: true },
+  { name: "Fitness",             type: "expense", color: "bg-lime-100 text-lime-700",      icon: "🏋️", isDefault: true },
+  { name: "Cosmetics",           type: "expense", color: "bg-pink-100 text-pink-700",      icon: "💄", isDefault: true },
+  { name: "Haircut",             type: "expense", color: "bg-orange-100 text-orange-700",  icon: "✂️", isDefault: true },
+  { name: "Education",           type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📚", isDefault: true },
+  { name: "Family",              type: "expense", color: "bg-rose-100 text-rose-700",      icon: "👨‍👩‍👧", isDefault: true },
+  { name: "Pets",                type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🐶", isDefault: true },
+  { name: "Gifts & Donations",   type: "expense", color: "bg-fuchsia-100 text-fuchsia-700",icon: "🎁", isDefault: true },
 
-  // ─── Expense — entertainment ───────────────────────────────────────────────
-  { name: "Hiburan",             type: "expense", color: "bg-purple-100 text-purple-700",  icon: "🎬", isDefault: true },
-  { name: "Konser",              type: "expense", color: "bg-violet-100 text-violet-700",  icon: "🎤", isDefault: true },
-  { name: "Game",                type: "expense", color: "bg-indigo-100 text-indigo-700",  icon: "🎮", isDefault: true },
+  // ─── Expense — entertainment (2) ───────────────────────────────────────────
+  { name: "Entertainment",       type: "expense", color: "bg-purple-100 text-purple-700",  icon: "🎬", isDefault: true },
+  { name: "Games",               type: "expense", color: "bg-indigo-100 text-indigo-700",  icon: "🎮", isDefault: true },
 
-  // ─── Expense — finance ─────────────────────────────────────────────────────
-  { name: "Investasi",           type: "expense", color: "bg-emerald-100 text-emerald-700",icon: "📈", isDefault: true },
-  { name: "Bayar Bunga",         type: "expense", color: "bg-amber-100 text-amber-700",    icon: "💸", isDefault: true },
-  { name: "Bayar Hutang",        type: "expense", color: "bg-red-100 text-red-700",        icon: "💳", isDefault: true },
-  { name: "Cicilan",             type: "expense", color: "bg-orange-100 text-orange-700",  icon: "📆", isDefault: true },
+  // ─── Expense — finance (3) ─────────────────────────────────────────────────
+  { name: "Investment",          type: "expense", color: "bg-emerald-100 text-emerald-700",icon: "📈", isDefault: true },
+  { name: "Pay Interest",        type: "expense", color: "bg-amber-100 text-amber-700",    icon: "💸", isDefault: true },
+  { name: "Pay Debt",            type: "expense", color: "bg-red-100 text-red-700",        icon: "💳", isDefault: true },
 
-  // ─── Expense — misc ────────────────────────────────────────────────────────
-  { name: "Hilang",              type: "expense", color: "bg-neutral-100 text-neutral-700",icon: "❌", isDefault: true },
-  { name: "Pengeluaran Lainnya", type: "expense", color: "bg-gray-100 text-gray-700",      icon: "📌", isDefault: true },
+  // ─── Expense — misc (1) ────────────────────────────────────────────────────
+  { name: "Other Expense",       type: "expense", color: "bg-gray-100 text-gray-700",      icon: "📌", isDefault: true },
 
   // ─── Internal — used by Goal contributions, hidden from manual pickers ─────
-  { name: "Tabungan",            type: "expense", color: "bg-violet-100 text-violet-700",  icon: "🐷", isDefault: true, isInternal: true },
+  { name: "Savings",             type: "expense", color: "bg-violet-100 text-violet-700",  icon: "🐷", isDefault: true, isInternal: true },
 ];
 
 /** Look up a category's color + icon by name from a list of categories. Falls back to gray. */
