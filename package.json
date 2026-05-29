@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "bash scripts/use-node21.sh next dev",
+    "build": "bash scripts/use-node21.sh next build",
+    "start": "bash scripts/use-node21.sh next start",
     "lint": "eslint"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.65",
