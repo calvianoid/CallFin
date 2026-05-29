@@ -6,6 +6,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { Transaction, Budget, Goal, Wallet, Category } from "@/types";
@@ -401,56 +402,67 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const deleteTransaction = useCallback((id: string) => {
-    setTransactions((prev) => {
-      const tx = prev.find((t) => t.id === id);
-      if (!tx) return prev;
+  // We need the latest transactions to look up the tx being deleted without
+  // putting the lookup inside a setState updater (React StrictMode would call
+  // the updater twice in dev, double-firing every side effect inside).
+  const transactionsRef = useRef(transactions);
+  useEffect(() => {
+    transactionsRef.current = transactions;
+  }, [transactions]);
 
-      // Mirror the SQL trigger's reversal locally so the UI stays in sync.
-      if (tx.type === "transfer" && tx.transfer_to_wallet_id) {
-        setWallets((ws) =>
-          ws.map((w) => {
-            if (w.id === tx.wallet_id) return { ...w, balance: w.balance + tx.amount };
-            if (w.id === tx.transfer_to_wallet_id) return { ...w, balance: w.balance - tx.amount };
-            return w;
-          }),
-        );
-      } else if (tx.goal_id) {
-        setWallets((ws) =>
-          ws.map((w) => (w.id === tx.wallet_id ? { ...w, balance: w.balance + tx.amount } : w)),
-        );
-        setGoals((gs) =>
-          gs.map((g) =>
-            g.id === tx.goal_id ? { ...g, current_amount: Math.max(g.current_amount - tx.amount, 0) } : g,
+  const deleteTransaction = useCallback((id: string) => {
+    const tx = transactionsRef.current.find((t) => t.id === id);
+    if (!tx) return;
+
+    // 1. Drop the tx from the list — this updater is pure, safe under StrictMode.
+    setTransactions((prev) => prev.filter((t) => t.id !== id));
+
+    // 2. Mirror the SQL trigger's reversal locally so the UI stays in sync.
+    //    These setState calls are at the TOP level — React only calls each
+    //    updater function once per real invocation.
+    if (tx.type === "transfer" && tx.transfer_to_wallet_id) {
+      const destId = tx.transfer_to_wallet_id;
+      setWallets((ws) =>
+        ws.map((w) => {
+          if (w.id === tx.wallet_id) return { ...w, balance: w.balance + tx.amount };
+          if (w.id === destId) return { ...w, balance: w.balance - tx.amount };
+          return w;
+        }),
+      );
+    } else if (tx.goal_id) {
+      const goalId = tx.goal_id;
+      setWallets((ws) =>
+        ws.map((w) => (w.id === tx.wallet_id ? { ...w, balance: w.balance + tx.amount } : w)),
+      );
+      setGoals((gs) =>
+        gs.map((g) =>
+          g.id === goalId ? { ...g, current_amount: Math.max(g.current_amount - tx.amount, 0) } : g,
+        ),
+      );
+    } else {
+      const delta = tx.type === "income" ? -tx.amount : tx.amount;
+      setWallets((ws) =>
+        ws.map((w) => (w.id === tx.wallet_id ? { ...w, balance: w.balance + delta } : w)),
+      );
+      if (tx.type === "expense") {
+        setBudgets((bs) =>
+          bs.map((b) =>
+            b.category === tx.category
+              ? { ...b, spent: Math.max((b.spent || 0) - tx.amount, 0) }
+              : b,
           ),
         );
-      } else {
-        const delta = tx.type === "income" ? -tx.amount : tx.amount;
-        setWallets((ws) =>
-          ws.map((w) => (w.id === tx.wallet_id ? { ...w, balance: w.balance + delta } : w)),
+      }
+    }
+
+    // 3. Persist to Supabase — the SQL trigger handles reversal there too.
+    if (SUPABASE_READY) {
+      import("./api/transactions")
+        .then((m) => m.deleteTransaction(id))
+        .catch((err) =>
+          console.error("[store] deleteTransaction failed:", err),
         );
-        if (tx.type === "expense") {
-          setBudgets((bs) =>
-            bs.map((b) =>
-              b.category === tx.category
-                ? { ...b, spent: Math.max((b.spent || 0) - tx.amount, 0) }
-                : b,
-            ),
-          );
-        }
-      }
-
-      // Persist to Supabase for all types — the SQL trigger handles reversal there.
-      if (SUPABASE_READY) {
-        import("./api/transactions")
-          .then((m) => m.deleteTransaction(id))
-          .catch((err) =>
-            console.error("[store] deleteTransaction failed:", err),
-          );
-      }
-
-      return prev.filter((t) => t.id !== id);
-    });
+    }
   }, []);
 
   const addBudget = useCallback((b: Omit<Budget, "id" | "user_id">) => {
