@@ -3,8 +3,7 @@
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { useStore } from "@/lib/store";
 import {
   parseMoneyLoverCsv,
@@ -16,26 +15,69 @@ import { CategoryDialog } from "@/components/forms/CategoryDialog";
 import { WalletDialog } from "@/components/forms/WalletDialog";
 import { formatRupiah } from "@/lib/mock-data";
 import {
-  Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
-  Loader2, Plus, ArrowLeftRight, TrendingUp, TrendingDown, X,
+  Upload, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft,
+  Loader2, ArrowLeftRight, TrendingUp, TrendingDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CategoryType } from "@/types";
 
-type Step = "upload" | "map" | "review" | "result";
+type Step = "source" | "upload" | "map" | "review" | "result";
 
 const STEP_TITLES: Record<Step, string> = {
-  upload: "Upload File",
+  source: "Sumber",
+  upload: "Upload",
   map: "Mapping",
   review: "Review",
   result: "Done",
 };
 
-const STEP_ORDER: Step[] = ["upload", "map", "review", "result"];
+const STEP_ORDER: Step[] = ["source", "upload", "map", "review", "result"];
+
+interface ImportSource {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  available: boolean;
+  fileTypes?: string;
+}
+
+const IMPORT_SOURCES: ImportSource[] = [
+  {
+    id: "money-lover",
+    name: "Money Lover",
+    icon: "💰",
+    description: "Import dari Money Lover Web (Files → Export → CSV).",
+    available: true,
+    fileTypes: ".csv",
+  },
+  {
+    id: "spendee",
+    name: "Spendee",
+    icon: "📊",
+    description: "Coming soon — beri tahu kalau ini butuh prioritas.",
+    available: false,
+  },
+  {
+    id: "wallet",
+    name: "Wallet by BudgetBakers",
+    icon: "👛",
+    description: "Coming soon.",
+    available: false,
+  },
+  {
+    id: "csv-generic",
+    name: "CSV Custom",
+    icon: "📄",
+    description: "Coming soon — mapping kolom manual untuk file CSV apa saja.",
+    available: false,
+  },
+];
 
 export function ImportWizard() {
   const { wallets, categories } = useStore();
-  const [step, setStep] = useState<Step>("upload");
+  const [step, setStep] = useState<Step>("source");
+  const [source, setSource] = useState<ImportSource | null>(null);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
@@ -206,13 +248,66 @@ export function ImportWizard() {
         })}
       </div>
 
-      {/* ─── Step: Upload ────────────────────────────────────────────────── */}
-      {step === "upload" && (
+      {/* ─── Step: Source ───────────────────────────────────────────────── */}
+      {step === "source" && (
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-base">Import dari Money Lover</CardTitle>
+            <CardTitle className="text-base">Pilih Sumber Data</CardTitle>
             <CardDescription>
-              Export transaksi dari Money Lover Web → File → Download → CSV, lalu upload di sini.
+              Pilih aplikasi yang kamu pakai sebelumnya. Untuk sementara baru Money Lover yang siap.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {IMPORT_SOURCES.map((s) => {
+              const isActive = source?.id === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    if (!s.available) return;
+                    setSource(s);
+                    setStep("upload");
+                  }}
+                  disabled={!s.available}
+                  className={cn(
+                    "w-full flex items-start gap-3 p-3 rounded-xl border transition-all text-left",
+                    s.available
+                      ? "border-border hover:border-primary hover:bg-primary/5 cursor-pointer"
+                      : "border-border/50 bg-muted/30 opacity-60 cursor-not-allowed",
+                    isActive && "border-primary bg-primary/5 ring-2 ring-primary/20",
+                  )}
+                >
+                  <span className="text-2xl shrink-0">{s.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="font-semibold text-sm">{s.name}</p>
+                      {!s.available && (
+                        <span className="text-[10px] uppercase tracking-wide bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
+                          Coming soon
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground">{s.description}</p>
+                  </div>
+                  {s.available && <ArrowRight className="h-4 w-4 text-muted-foreground self-center shrink-0" />}
+                </button>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ─── Step: Upload ────────────────────────────────────────────────── */}
+      {step === "upload" && source && (
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <span className="text-xl">{source.icon}</span>
+              Upload File dari {source.name}
+            </CardTitle>
+            <CardDescription>
+              Export transaksi dari {source.name} → File → Download → CSV, lalu upload di sini.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -249,6 +344,12 @@ export function ImportWizard() {
               <p>3. Pilih period & wallet, download CSV</p>
               <p>4. Upload file-nya di sini</p>
             </div>
+
+            <div className="mt-3 flex">
+              <Button variant="outline" size="sm" onClick={() => { setStep("source"); setSource(null); }}>
+                <ArrowLeft className="h-3.5 w-3.5 mr-1" /> Ganti sumber
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -265,43 +366,26 @@ export function ImportWizard() {
             </CardHeader>
             <CardContent className="space-y-2">
               {parsed.uniqueWallets.map((raw) => {
-                const mapped = walletMap[raw];
+                const walletItems: ComboboxItem[] = wallets.map((w) => ({
+                  value: w.id,
+                  label: w.name,
+                  icon: w.icon,
+                }));
                 return (
                   <div key={raw} className="flex items-center gap-2 p-2 rounded-lg border border-border">
                     <span className="text-sm font-medium flex-1 truncate">{raw}</span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <Select
-                      value={mapped || ""}
-                      onValueChange={(v) => {
-                        const val = v ?? "";
-                        if (val === "__create__") {
-                          setNewWalletFor(raw);
-                        } else if (val) {
-                          setWalletMap((m) => ({ ...m, [raw]: val }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        {(() => {
-                          const w = wallets.find((x) => x.id === mapped);
-                          return w ? (
-                            <span className="truncate">{w.icon} {w.name}</span>
-                          ) : (
-                            <SelectValue placeholder="Pilih dompet" />
-                          );
-                        })()}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {wallets.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>
-                            {w.icon} {w.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="__create__">
-                          <span className="flex items-center gap-1 text-primary"><Plus className="h-3 w-3" /> Buat dompet baru</span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      value={walletMap[raw] || ""}
+                      onValueChange={(v) => setWalletMap((m) => ({ ...m, [raw]: v }))}
+                      items={walletItems}
+                      placeholder="Pilih dompet"
+                      searchPlaceholder="Cari dompet..."
+                      emptyMessage="Tidak ada dompet."
+                      onCreate={() => setNewWalletFor(raw)}
+                      createLabel="Buat dompet baru"
+                      triggerClassName="w-[220px]"
+                    />
                   </div>
                 );
               })}
@@ -317,9 +401,10 @@ export function ImportWizard() {
             </CardHeader>
             <CardContent className="space-y-2">
               {parsed.uniqueCategories.map((raw) => {
-                const mapped = categoryMap[raw];
                 const type = rawCategoryType(raw);
-                const options = categories.filter((c) => c.type === type && !c.isInternal);
+                const items: ComboboxItem[] = categories
+                  .filter((c) => c.type === type && !c.isInternal)
+                  .map((c) => ({ value: c.name, label: c.name, icon: c.icon }));
                 return (
                   <div key={raw} className="flex items-center gap-2 p-2 rounded-lg border border-border">
                     <span className="text-sm font-medium flex-1 truncate flex items-center gap-1">
@@ -327,38 +412,17 @@ export function ImportWizard() {
                       {raw}
                     </span>
                     <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                    <Select
-                      value={mapped || ""}
-                      onValueChange={(v) => {
-                        const val = v ?? "";
-                        if (val === "__create__") {
-                          setNewCategoryFor({ name: raw, type });
-                        } else if (val) {
-                          setCategoryMap((m) => ({ ...m, [raw]: val }));
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-[220px]">
-                        {(() => {
-                          const c = categories.find((x) => x.name === mapped);
-                          return c ? (
-                            <span className="truncate">{c.icon} {c.name}</span>
-                          ) : (
-                            <SelectValue placeholder="Pilih kategori" />
-                          );
-                        })()}
-                      </SelectTrigger>
-                      <SelectContent>
-                        {options.map((c) => (
-                          <SelectItem key={c.id} value={c.name}>
-                            {c.icon} {c.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="__create__">
-                          <span className="flex items-center gap-1 text-primary"><Plus className="h-3 w-3" /> Buat kategori baru</span>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      value={categoryMap[raw] || ""}
+                      onValueChange={(v) => setCategoryMap((m) => ({ ...m, [raw]: v }))}
+                      items={items}
+                      placeholder="Pilih kategori"
+                      searchPlaceholder="Cari kategori..."
+                      emptyMessage="Tidak ada kategori."
+                      onCreate={() => setNewCategoryFor({ name: raw, type })}
+                      createLabel="Buat kategori baru"
+                      triggerClassName="w-[240px]"
+                    />
                   </div>
                 );
               })}
@@ -504,7 +568,8 @@ export function ImportWizard() {
 
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => {
-                setStep("upload");
+                setStep("source");
+                setSource(null);
                 setParsed(null);
                 setResult(null);
                 setCategoryMap({});
