@@ -136,3 +136,77 @@
   }
 }
 
+/* ───────────────────────────────────────────────────────────────────────────
+   Print styles — used by the Reports "Export PDF" button via window.print().
+   Strips chrome (sidebar, mobile header, action buttons) and forces a clean
+   black-on-white layout so the user gets a tidy PDF from the browser print
+   dialog.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media print {
+  /* Hide app chrome */
+  aside,
+  header,
+  .no-print,
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  /* Reset background to white & remove all dark variants */
+  html,
+  body,
+  main,
+  .bg-background,
+  .bg-card,
+  .bg-popover,
+  .bg-muted,
+  .bg-sidebar {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Cards: no shadow, thin border, avoid breaking across pages */
+  [data-slot="card"],
+  .border,
+  .border-border,
+  .border-border\/50 {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Make main full width */
+  main,
+  main > div,
+  .max-w-3xl,
+  .max-w-5xl {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Show the print-only header (h2 with .print-only) */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Slightly smaller text for density */
+  body {
+    font-size: 11px;
+  }
+  h1 { font-size: 20px !important; }
+  h2 { font-size: 16px !important; }
+  h3 { font-size: 14px !important; }
+
+  /* Page setup */
+  @page {
+    margin: 12mm 10mm;
+    size: A4;
+  }
+}
+.print-only {
+  display: none;
+}
+

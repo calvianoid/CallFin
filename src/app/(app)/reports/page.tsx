@@ -279,23 +279,48 @@ export default function ReportsPage() {
   // ──────────────────────────────────────────────────────────────────────────
   // Render
   // ──────────────────────────────────────────────────────────────────────────
+  function handlePrint() {
+    if (typeof window === "undefined") return;
+    // Cache & restore document.title so the saved PDF filename suggestion is
+    // "CallFin — Laporan <Month>.pdf" instead of the generic app title.
+    const oldTitle = document.title;
+    document.title = `CallFin — Laporan ${formatMonthLabel(month)}`;
+    window.print();
+    setTimeout(() => { document.title = oldTitle; }, 500);
+  }
+
+  const todayLabel = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date());
+
   return (
     <div className="p-4 sm:p-6 max-w-5xl space-y-5">
-      <div className="flex items-center justify-between gap-3">
+      {/* Print-only header — visible only when printing */}
+      <div className="print-only mb-3 border-b border-gray-300 pb-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-bold text-base">CallFin</p>
+            <p className="text-xs text-gray-600">Laporan Keuangan — {formatMonthLabel(month)}</p>
+          </div>
+          <p className="text-xs text-gray-600">Dicetak {todayLabel}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 no-print">
         <div>
           <h1 className="text-lg sm:text-xl font-bold">Laporan Keuangan</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
             Ringkasan {formatMonthLabel(month)}
           </p>
         </div>
-        <Button variant="outline" size="sm" className="gap-2 shrink-0">
+        <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handlePrint}>
           <Download className="h-4 w-4" />
           <span className="hidden sm:inline">Export PDF</span>
           <span className="sm:hidden">Export</span>
         </Button>
       </div>
 
-      <MonthPicker value={month} onChange={setMonth} />
+      <div className="no-print">
+        <MonthPicker value={month} onChange={setMonth} />
+      </div>
 
       {/* ─── Hero KPIs ───────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
