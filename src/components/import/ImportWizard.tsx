@@ -282,7 +282,14 @@ export function ImportWizard() {
                       }}
                     >
                       <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Pilih dompet" />
+                        {(() => {
+                          const w = wallets.find((x) => x.id === mapped);
+                          return w ? (
+                            <span className="truncate">{w.icon} {w.name}</span>
+                          ) : (
+                            <SelectValue placeholder="Pilih dompet" />
+                          );
+                        })()}
                       </SelectTrigger>
                       <SelectContent>
                         {wallets.map((w) => (
@@ -332,7 +339,14 @@ export function ImportWizard() {
                       }}
                     >
                       <SelectTrigger className="w-[220px]">
-                        <SelectValue placeholder="Pilih kategori" />
+                        {(() => {
+                          const c = categories.find((x) => x.name === mapped);
+                          return c ? (
+                            <span className="truncate">{c.icon} {c.name}</span>
+                          ) : (
+                            <SelectValue placeholder="Pilih kategori" />
+                          );
+                        })()}
                       </SelectTrigger>
                       <SelectContent>
                         {options.map((c) => (
