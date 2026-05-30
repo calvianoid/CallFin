@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/lib/i18n/context";
+import { PreferencesProvider } from "@/lib/preferences";
 import { DemoModeBanner } from "@/components/layout/DemoModeBanner";
 import { DocumentTitle } from "@/components/layout/DocumentTitle";
 import "./globals.css";
@@ -68,9 +69,11 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider>
           <LocaleProvider>
-            <DocumentTitle />
-            <DemoModeBanner />
-            {children}
+            <PreferencesProvider>
+              <DocumentTitle />
+              <DemoModeBanner />
+              {children}
+            </PreferencesProvider>
           </LocaleProvider>
         </ThemeProvider>
       </body>

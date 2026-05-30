@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/lib/i18n/context";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { useStore } from "@/lib/store";
+import { usePreferences } from "@/lib/preferences";
 
 const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey; label?: string }[] = [
   { href: "/", icon: MessageSquare, key: "nav.dashboard" },
@@ -45,6 +46,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { profile, isHydrating } = useStore();
+  const { showFreedom } = usePreferences();
+  const visibleNavItems = navItems.filter((item) => item.href !== "/freedom" || showFreedom);
   const displayName = profile?.full_name || "Guest";
   const displayEmail = profile?.email || "—";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -60,7 +63,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map(({ href, icon: Icon, key, label }) => {
+        {visibleNavItems.map(({ href, icon: Icon, key, label }) => {
           const active = pathname === href;
           return (
             <Link

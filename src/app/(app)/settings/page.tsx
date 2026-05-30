@@ -16,11 +16,13 @@ import Link from "next/link";
 import { useTranslation } from "@/lib/i18n/context";
 import { LOCALE_LABELS, Locale } from "@/lib/i18n/translations";
 import { useStore } from "@/lib/store";
+import { usePreferences } from "@/lib/preferences";
 
 export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { t, locale, setLocale } = useTranslation();
   const { profile: storeProfile, updateProfile, isHydrating } = useStore();
+  const { showFreedom, setShowFreedom } = usePreferences();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -192,6 +194,22 @@ export default function SettingsPage() {
                     : t("settings.themeNow", { now: theme === "dark" ? t("settings.now.dark") : t("settings.now.light") })
                   : t("common.loading")}
               </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="text-base">{t("settings.menu")}</CardTitle>
+              <CardDescription>{t("settings.menuDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-start justify-between gap-3 py-1">
+                <div>
+                  <p className="text-sm font-medium">{t("settings.showFreedom")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.showFreedomDesc")}</p>
+                </div>
+                <Switch checked={showFreedom} onCheckedChange={setShowFreedom} />
+              </div>
             </CardContent>
           </Card>
 
