@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Loader2, CheckCircle2 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
@@ -133,7 +134,7 @@ export default function RegisterPage() {
             <>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("auth.monthlyIncome")}</label>
-                <Input type="number" placeholder="10000000" value={form.monthly_income} onChange={(e) => update("monthly_income", e.target.value)} />
+                <CurrencyInput placeholder="10.000.000" value={form.monthly_income} onValueChange={(v) => update("monthly_income", v)} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t("auth.primaryGoal")}</label>
