@@ -205,6 +205,13 @@ function L(locale: Locale, id: string, en: string): string {
   return locale === "en" ? en : id;
 }
 
+// A transaction's display label — its description, or the category name when the
+// description is empty (common for CSV-imported or amount-only chat entries).
+function txLabel(t: Transaction): string {
+  const d = t.description?.trim();
+  return d && d.length > 0 ? d : t.category;
+}
+
 export function answerQuery(text: string, ctx: AnswerContext, locale: Locale = "id"): string {
   const lower = text.toLowerCase();
   const { transactions, wallets, budgets, goals } = ctx;
@@ -294,7 +301,7 @@ export function answerQuery(text: string, ctx: AnswerContext, locale: Locale = "
     const list = recent.map((t) => {
       const w = wallets.find((x) => x.id === t.wallet_id);
       const sign = t.type === "income" ? "+" : "-";
-      return `${t.type === "income" ? "📈" : "📉"} ${t.description} — ${sign}${formatRupiah(t.amount)} (${w?.icon || ""} ${w?.name || "—"})`;
+      return `${t.type === "income" ? "📈" : "📉"} ${txLabel(t)} — ${sign}${formatRupiah(t.amount)} (${w?.icon || ""} ${w?.name || "—"})`;
     }).join("\n");
     return `🕐 **${L(locale, "5 transaksi terakhir", "Last 5 transactions")}:**\n\n${list}`;
   }
@@ -342,7 +349,7 @@ export function answerQuery(text: string, ctx: AnswerContext, locale: Locale = "
         return L(locale, `Tidak ada pengeluaran ${rLabel}. Mantap! 👍`, `No expenses for ${rLabel}. Nice! 👍`);
       }
       const top = [...expenses].sort((a, b) => b.amount - a.amount).slice(0, 3);
-      const topList = top.map((t) => `• ${t.description}: ${formatRupiah(t.amount)}`).join("\n");
+      const topList = top.map((t) => `• ${txLabel(t)}: ${formatRupiah(t.amount)}`).join("\n");
       return L(
         locale,
         `📉 **Total pengeluaran ${rLabel}:** ${formatRupiah(totalExpense)}\n\nDari ${expenses.length} transaksi. Yang terbesar:\n${topList}`,
@@ -355,7 +362,7 @@ export function answerQuery(text: string, ctx: AnswerContext, locale: Locale = "
       if (incomes.length === 0) {
         return L(locale, `Tidak ada pemasukan ${rLabel}.`, `No income for ${rLabel}.`);
       }
-      const list = incomes.map((t) => `• ${t.description}: ${formatRupiah(t.amount)}`).join("\n");
+      const list = incomes.map((t) => `• ${txLabel(t)}: ${formatRupiah(t.amount)}`).join("\n");
       return L(
         locale,
         `📈 **Total pemasukan ${rLabel}:** ${formatRupiah(totalIncome)}\n\n${list}`,
