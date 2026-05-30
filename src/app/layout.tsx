@@ -23,9 +23,35 @@ const jetbrainsMono = JetBrains_Mono({
 // Static default shown during SSR / before the client locale loads (and what
 // search engines + link previews see). DocumentTitle swaps it to the user's
 // chosen language on the client.
+const APP_NAME = "CallFin";
+const APP_TITLE = "CallFin — AI Finance Assistant";
+const APP_DESC = "Chat to record transactions, track budgets & goals, and get instant financial insights — powered by AI.";
+const APP_URL = "https://callfin.vercel.app";
+
 export const metadata: Metadata = {
-  title: "CallFin — AI Finance Assistant",
-  description: "Record, track, and improve your finances with AI.",
+  metadataBase: new URL(APP_URL),
+  title: APP_TITLE,
+  description: APP_DESC,
+  applicationName: APP_NAME,
+  keywords: [
+    "personal finance", "AI finance assistant", "expense tracker",
+    "budget", "keuangan", "catat keuangan", "manajemen keuangan", "CallFin",
+  ],
+  authors: [{ name: "CallFin" }],
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: APP_TITLE,
+    description: APP_DESC,
+    url: APP_URL,
+    locale: "en_US",
+    // The generated src/app/opengraph-image.tsx is picked up automatically.
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: APP_TITLE,
+    description: APP_DESC,
+  },
 };
 
 export default function RootLayout({
