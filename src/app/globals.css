@@ -134,6 +134,20 @@
   [class*="font-mono"] {
     font-variant-numeric: tabular-nums;
   }
+  /* Tailwind v4 no longer sets cursor:pointer on buttons by default — restore it
+     for all interactive elements so they clearly read as clickable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label[for],
+  summary,
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
