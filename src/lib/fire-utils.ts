@@ -1,4 +1,4 @@
-import { Transaction, Wallet } from "@/types";
+import { Transaction, Wallet, Goal } from "@/types";
 
 /**
  * FIRE (Financial Independence, Retire Early) math built around the 4% Rule.
@@ -195,6 +195,17 @@ export function deriveFinancials(
     netWorth,
     monthsOfData: monthsSeen.size,
   };
+}
+
+/**
+ * Find the goal a user has earmarked for financial independence. Matched by
+ * name so progress on the FIRE page tracks dedicated FI savings — not their
+ * whole net worth (which includes cash they'll spend).
+ */
+const FIRE_GOAL_RE = /kebebasan finansial|merdeka finansial|financial freedom|\bfire\b|\bfi\b|pensiun|retire/i;
+
+export function findFireGoal(goals: Goal[]): Goal | undefined {
+  return goals.find((g) => FIRE_GOAL_RE.test(g.goal_name));
 }
 
 /** Format a month count as a friendly "X yr Y mo" / "X th Y bln" string. */

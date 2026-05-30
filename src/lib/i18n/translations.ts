@@ -328,6 +328,14 @@ export const TRANSLATIONS = {
     "fire.explainTitle": "Kenapa × 25? (Aturan 4%)",
     "fire.explainBody": "Aturan 4% bilang kamu bisa menarik 4% dari total asetmu setiap tahun — disesuaikan inflasi — tanpa kehabisan. Artinya kamu butuh aset sebesar pengeluaran tahunan ÷ 4% = × 25.",
     "fire.rateNote": "Lebih konservatif (mis. 3,5%) = angka FIRE lebih besar, tapi lebih aman.",
+    "fire.useRealExpense": "Pakai pengeluaran asli ({amount})",
+    "fire.goalProgress": "Progress Goal Kebebasan Finansial",
+    "fire.goalProgressHint": "Dihitung dari dana yang kamu sisihkan khusus untuk kebebasan finansial — bukan total uangmu.",
+    "fire.goalOf": "{current} dari {target}",
+    "fire.addFunds": "Tambah Dana",
+    "fire.noGoalTitle": "Belum ada goal khusus kebebasan finansial",
+    "fire.noGoalBody": "Buat goal terpisah untuk dana kebebasan finansial, biar progress-nya kebaca dari tabungan khusus — bukan dari semua uangmu.",
+    "fire.createGoal": "Buat Goal Kebebasan Finansial",
 
     // Transaction Dialog
     "txDlg.title.add": "Tambah Transaksi",
@@ -793,6 +801,14 @@ export const TRANSLATIONS = {
     "fire.explainTitle": "Why × 25? (The 4% Rule)",
     "fire.explainBody": "The 4% Rule says you can withdraw 4% of your total assets each year — adjusted for inflation — without running out. So you need assets equal to your annual expenses ÷ 4% = × 25.",
     "fire.rateNote": "More conservative (e.g. 3.5%) = a bigger FIRE number, but safer.",
+    "fire.useRealExpense": "Use real expenses ({amount})",
+    "fire.goalProgress": "Financial Freedom Goal Progress",
+    "fire.goalProgressHint": "Tracked from funds you set aside specifically for financial freedom — not your total money.",
+    "fire.goalOf": "{current} of {target}",
+    "fire.addFunds": "Add Funds",
+    "fire.noGoalTitle": "No dedicated financial freedom goal yet",
+    "fire.noGoalBody": "Create a separate goal for your financial freedom fund, so progress reflects dedicated savings — not all your money.",
+    "fire.createGoal": "Create Financial Freedom Goal",
 
     // Transaction Dialog
     "txDlg.title.add": "Add Transaction",

@@ -21,16 +21,19 @@ interface GoalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: Goal;
+  /** Prefill when creating a new goal (ignored in edit mode). */
+  defaultName?: string;
+  defaultTarget?: number;
 }
 
-export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
+export function GoalDialog({ open, onOpenChange, initial, defaultName, defaultTarget }: GoalDialogProps) {
   const { addGoal, updateGoal } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial;
 
-  const [name, setName] = useState(initial?.goal_name || "");
+  const [name, setName] = useState(initial?.goal_name || defaultName || "");
   const [target, setTarget] = useState<string>(
-    initial?.target_amount ? String(initial.target_amount) : "",
+    initial?.target_amount ? String(initial.target_amount) : defaultTarget ? String(defaultTarget) : "",
   );
   const [current, setCurrent] = useState<string>(
     initial?.current_amount ? String(initial.current_amount) : "0",
@@ -41,14 +44,16 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
 
   useEffect(() => {
     if (open) {
-      setName(initial?.goal_name || "");
-      setTarget(initial?.target_amount ? String(initial.target_amount) : "");
+      setName(initial?.goal_name || defaultName || "");
+      setTarget(
+        initial?.target_amount ? String(initial.target_amount) : defaultTarget ? String(defaultTarget) : "",
+      );
       setCurrent(
         initial?.current_amount ? String(initial.current_amount) : "0",
       );
       setDeadline(initial?.deadline?.slice(0, 10) || "");
     }
-  }, [open, initial]);
+  }, [open, initial, defaultName, defaultTarget]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

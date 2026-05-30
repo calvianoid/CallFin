@@ -3,20 +3,23 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 import { formatRupiah } from "@/lib/mock-data";
-import { deriveFinancials, fireNumber, monthlyPassiveIncome } from "@/lib/fire-utils";
-import { Rocket, TrendingUp, Info, ArrowRight, Calculator } from "lucide-react";
+import { deriveFinancials, fireNumber, monthlyPassiveIncome, findFireGoal } from "@/lib/fire-utils";
+import { GoalDialog } from "@/components/forms/GoalDialog";
+import { GoalContributionDialog } from "@/components/forms/GoalContributionDialog";
+import { Rocket, TrendingUp, Info, ArrowRight, Calculator, Target, Plus, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const RATE_OPTIONS = [3, 3.5, 4]; // %
 
 export default function FreedomPage() {
-  const { transactions, wallets, isHydrating } = useStore();
+  const { transactions, wallets, goals, isHydrating } = useStore();
   const { t, locale } = useTranslation();
 
   const derived = useMemo(() => deriveFinancials(transactions, wallets), [transactions, wallets]);
@@ -24,16 +27,23 @@ export default function FreedomPage() {
   // Only one editable input: the average monthly expense (null = follow data).
   const [ovrMonthly, setOvrMonthly] = useState<number | null>(null);
   const [withdrawalPct, setWithdrawalPct] = useState(4);
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [contribOpen, setContribOpen] = useState(false);
 
   const avgMonthly = ovrMonthly ?? Math.round(derived.avgMonthlyExpense);
   const annualExpenses = avgMonthly * 12;
   const rate = withdrawalPct / 100;
   const target = fireNumber(annualExpenses, rate);
   const multiplier = rate > 0 ? 1 / rate : 0;
-  const netWorth = Math.round(derived.netWorth);
-  const progress = target > 0 ? Math.min(netWorth / target, 1) : 0;
   const passive = monthlyPassiveIncome(target, rate);
   const hasData = derived.monthsOfData > 0;
+
+  // Progress tracks a DEDICATED financial-freedom goal — not total net worth.
+  const fireGoal = useMemo(() => findFireGoal(goals), [goals]);
+  const saved = fireGoal?.current_amount ?? 0;
+  const progress = target > 0 ? Math.min(saved / target, 1) : 0;
+  const realMonthly = Math.round(derived.avgMonthlyExpense);
+  const isOverridden = ovrMonthly !== null && ovrMonthly !== realMonthly;
 
   if (isHydrating && transactions.length === 0) {
     return (
@@ -122,19 +132,47 @@ export default function FreedomPage() {
         </Card>
       </div>
 
-      {/* Progress toward FIRE */}
-      <Card className="border-border/50">
-        <CardContent className="p-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">{t("fire.progressLabel")}</span>
-            <span className="text-sm font-bold text-primary tabular-nums">{(progress * 100).toFixed(1)}%</span>
-          </div>
-          <Progress value={progress * 100} className="h-3 [&>div]:bg-primary" />
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {t("fire.progressOf", { current: formatRupiah(netWorth), target: formatRupiah(target) })}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Progress toward FIRE — from a DEDICATED goal, not total net worth */}
+      {fireGoal ? (
+        <Card className="border-border/50">
+          <CardContent className="p-5 space-y-2.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-sm font-semibold">
+                  <Target className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="truncate">{t("fire.goalProgress")}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t("fire.goalProgressHint")}</p>
+              </div>
+              <span className="text-sm font-bold text-primary tabular-nums shrink-0">{(progress * 100).toFixed(1)}%</span>
+            </div>
+            <Progress value={progress * 100} className="h-3 [&>div]:bg-primary" />
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground tabular-nums">
+                {t("fire.goalOf", { current: formatRupiah(saved), target: formatRupiah(target) })}
+              </p>
+              <Button variant="outline" size="sm" className="h-7 gap-1 text-xs shrink-0" onClick={() => setContribOpen(true)}>
+                <Plus className="h-3 w-3" /> {t("fire.addFunds")}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="border-dashed border-primary/40 bg-primary/5">
+          <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 shrink-0">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{t("fire.noGoalTitle")}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("fire.noGoalBody")}</p>
+            </div>
+            <Button size="sm" className="gap-1.5 shrink-0" onClick={() => setGoalDialogOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> {t("fire.createGoal")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Minimal controls: monthly expense + withdrawal rate */}
       <Card className="border-border/50">
@@ -148,7 +186,18 @@ export default function FreedomPage() {
               onValueChange={(v) => setOvrMonthly(parseFloat(v) || 0)}
               placeholder="11.000.000"
             />
-            <p className="text-[10px] text-muted-foreground">{t("fire.adjustMonthly")}</p>
+            {hasData && isOverridden ? (
+              <button
+                type="button"
+                onClick={() => setOvrMonthly(null)}
+                className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+              >
+                <RotateCcw className="h-2.5 w-2.5" />
+                {t("fire.useRealExpense", { amount: formatRupiah(realMonthly) })}
+              </button>
+            ) : (
+              <p className="text-[10px] text-muted-foreground">{t("fire.adjustMonthly")}</p>
+            )}
           </div>
 
           <div className="space-y-1.5">
@@ -182,6 +231,23 @@ export default function FreedomPage() {
           <p className="text-xs text-muted-foreground leading-relaxed">{t("fire.explainBody")}</p>
         </CardContent>
       </Card>
+
+      {/* Create a dedicated FIRE goal (prefilled with name + the computed target) */}
+      <GoalDialog
+        open={goalDialogOpen}
+        onOpenChange={setGoalDialogOpen}
+        defaultName={locale === "en" ? "Financial Freedom" : "Kebebasan Finansial"}
+        defaultTarget={Math.round(target)}
+      />
+
+      {/* Top up the FIRE goal */}
+      {fireGoal && (
+        <GoalContributionDialog
+          open={contribOpen}
+          onOpenChange={setContribOpen}
+          goalId={fireGoal.id}
+        />
+      )}
     </div>
   );
 }

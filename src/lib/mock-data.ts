@@ -111,6 +111,7 @@ export const mockBudgets: Budget[] = [
 ];
 
 export const mockGoals: Goal[] = [
+  { id: "g0", user_id: "u1", goal_name: "Kebebasan Finansial", target_amount: 3300000000, current_amount: 215000000, deadline: "2040-01-01" },
   { id: "g1", user_id: "u1", goal_name: "Dana Darurat", target_amount: 66000000, current_amount: 45000000, deadline: "2026-12-31" },
   { id: "g2", user_id: "u1", goal_name: "DP Rumah", target_amount: 300000000, current_amount: 85000000, deadline: "2028-06-01" },
   { id: "g3", user_id: "u1", goal_name: "Liburan Jepang", target_amount: 35000000, current_amount: 12000000, deadline: "2026-11-01" },
