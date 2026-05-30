@@ -319,6 +319,16 @@ export const TRANSLATIONS = {
     "fire.whatIf": "💡 Coba geser \"Tabungan / Bulan\" — lihat berapa tahun yang bisa kamu pangkas!",
     "fire.coastYears": "Tahun sampai pensiun",
 
+    // Simplified 4%-Rule flow
+    "fire.stepMonthly": "Rata-rata Pengeluaran / Bulan",
+    "fire.stepAnnual": "Pengeluaran / Tahun",
+    "fire.stepFire": "Angka FIRE",
+    "fire.fromData": "dari {months} bln data",
+    "fire.adjustMonthly": "Ubah angka ini untuk simulasi skenario lain.",
+    "fire.explainTitle": "Kenapa × 25? (Aturan 4%)",
+    "fire.explainBody": "Aturan 4% bilang kamu bisa menarik 4% dari total asetmu setiap tahun — disesuaikan inflasi — tanpa kehabisan. Artinya kamu butuh aset sebesar pengeluaran tahunan ÷ 4% = × 25.",
+    "fire.rateNote": "Lebih konservatif (mis. 3,5%) = angka FIRE lebih besar, tapi lebih aman.",
+
     // Transaction Dialog
     "txDlg.title.add": "Tambah Transaksi",
     "txDlg.title.edit": "Edit Transaksi",
@@ -773,6 +783,16 @@ export const TRANSLATIONS = {
     "fire.year": "Year",
     "fire.whatIf": "💡 Try dragging \"Savings / Month\" — see how many years you can cut!",
     "fire.coastYears": "Years to retirement",
+
+    // Simplified 4%-Rule flow
+    "fire.stepMonthly": "Avg Monthly Expense",
+    "fire.stepAnnual": "Annual Expense",
+    "fire.stepFire": "FIRE Number",
+    "fire.fromData": "from {months} mo of data",
+    "fire.adjustMonthly": "Edit this number to simulate other scenarios.",
+    "fire.explainTitle": "Why × 25? (The 4% Rule)",
+    "fire.explainBody": "The 4% Rule says you can withdraw 4% of your total assets each year — adjusted for inflation — without running out. So you need assets equal to your annual expenses ÷ 4% = × 25.",
+    "fire.rateNote": "More conservative (e.g. 3.5%) = a bigger FIRE number, but safer.",
 
     // Transaction Dialog
     "txDlg.title.add": "Add Transaction",
