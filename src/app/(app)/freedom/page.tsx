@@ -125,7 +125,7 @@ export default function FreedomPage() {
               <Rocket className="h-3.5 w-3.5 text-primary" />
               {t("fire.heroLabel")}
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold tabular-nums text-primary leading-tight">
+            <p className="text-xl sm:text-2xl font-extrabold tabular-nums text-primary leading-tight">
               {formatRupiah(target)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1.5">
@@ -141,7 +141,7 @@ export default function FreedomPage() {
               <Clock className="h-3.5 w-3.5 text-sky-600" />
               {t("fire.timeToFi")}
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold tabular-nums leading-tight">
+            <p className="text-xl sm:text-2xl font-extrabold tabular-nums leading-tight">
               {formatDuration(months, locale)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1.5">{t("fire.timeToFiHint")}</p>
@@ -155,7 +155,7 @@ export default function FreedomPage() {
               <TrendingUp className="h-3.5 w-3.5 text-green-600" />
               {t("fire.passiveIncome")}
             </div>
-            <p className="text-2xl sm:text-3xl font-extrabold tabular-nums text-green-600 leading-tight">
+            <p className="text-xl sm:text-2xl font-extrabold tabular-nums text-green-600 leading-tight">
               {formatRupiah(passive)}<span className="text-sm font-medium text-muted-foreground">/bln</span>
             </p>
             <p className="text-[11px] text-muted-foreground mt-1.5">{t("fire.passiveIncomeHint")}</p>
