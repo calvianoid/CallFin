@@ -175,7 +175,13 @@ export default function TransactionsPage() {
                                 ? <TrendingUp className="h-3 w-3 text-green-600" />
                                 : <TrendingDown className="h-3 w-3 text-red-500" />}
                         </div>
-                        <span className="text-sm font-medium">{tx.description}</span>
+                        {tx.description?.trim() ? (
+                          <span className="text-sm font-medium">{tx.description}</span>
+                        ) : (
+                          <span className="text-sm italic text-muted-foreground/70">
+                            {t("tx.noDescription")}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>

@@ -89,6 +89,7 @@ export const TRANSLATIONS = {
     "tx.col.amount": "Jumlah",
     "tx.empty": "Tidak ada transaksi ditemukan.",
     "tx.allWallets": "Semua Dompet",
+    "tx.noDescription": "Tanpa deskripsi",
 
     // Budget
     "budget.title": "Manajemen Budget",
@@ -284,6 +285,7 @@ export const TRANSLATIONS = {
     "tx.col.amount": "Amount",
     "tx.empty": "No transactions found.",
     "tx.allWallets": "All Wallets",
+    "tx.noDescription": "No description",
 
     // Budget
     "budget.title": "Budget Manager",

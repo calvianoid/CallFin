@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { id } from "date-fns/locale";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -17,6 +18,7 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const { isHydrating } = useStore();
+  const { t } = useTranslation();
   const recent = [...transactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
@@ -65,7 +67,12 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{tx.description}</p>
+                <p className={cn(
+                  "text-sm font-medium truncate",
+                  !tx.description?.trim() && "italic text-muted-foreground/70"
+                )}>
+                  {tx.description?.trim() || t("tx.noDescription")}
+                </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <Badge
                     variant="secondary"
