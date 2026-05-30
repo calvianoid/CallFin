@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
 import { formatRupiah } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
@@ -9,9 +10,28 @@ import { Plus } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 
 export function WalletsStrip() {
-  const { wallets } = useStore();
+  const { wallets, isHydrating } = useStore();
   const { t } = useTranslation();
   const total = wallets.reduce((s, w) => s + w.balance, 0);
+
+  if (isHydrating && wallets.length === 0) {
+    return (
+      <Card className="border-border/50 overflow-hidden">
+        <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
+          <div className="space-y-1.5">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-5 w-40" />
+          </div>
+          <Skeleton className="h-3 w-20" />
+        </div>
+        <div className="flex gap-2 p-3 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="min-w-[140px] h-[68px] rounded-xl shrink-0" />
+          ))}
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-border/50 overflow-hidden">

@@ -17,6 +17,7 @@ import {
   Upload,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/lib/i18n/context";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -41,7 +42,7 @@ interface SidebarProps {
 export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { profile } = useStore();
+  const { profile, isHydrating } = useStore();
   const displayName = profile?.full_name || "Guest";
   const displayEmail = profile?.email || "—";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -111,13 +112,25 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </button>
 
         <div className="flex items-center gap-3 px-3 py-2 mt-1">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{initials || "?"}</AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col min-w-0">
-            <span className="text-sm font-semibold text-sidebar-foreground truncate">{displayName}</span>
-            <span className="text-xs text-muted-foreground truncate">{displayEmail}</span>
-          </div>
+          {isHydrating && !profile ? (
+            <>
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+              <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-2.5 w-32" />
+              </div>
+            </>
+          ) : (
+            <>
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{initials || "?"}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-sidebar-foreground truncate">{displayName}</span>
+                <span className="text-xs text-muted-foreground truncate">{displayEmail}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>

@@ -32,6 +32,12 @@ export interface UserProfile {
 }
 
 interface StoreContextValue {
+  /**
+   * True while the initial hydration from Supabase is in flight. Components
+   * can check this to render skeletons instead of empty states on first paint.
+   * Stays false in mock-mode (no Supabase configured).
+   */
+  isHydrating: boolean;
   profile: UserProfile | null;
   wallets: Wallet[];
   transactions: Transaction[];
@@ -82,6 +88,9 @@ function makeId() {
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  // Start in hydrating state when Supabase is configured so consumers can show
+  // skeletons immediately on first paint instead of an empty-state flash.
+  const [isHydrating, setIsHydrating] = useState(SUPABASE_READY);
   const [wallets, setWallets] = useState<Wallet[]>(
     SUPABASE_READY ? [] : mockWallets,
   );
@@ -176,6 +185,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setBudgets(bs);
       setGoals(gs);
       setCategories(cs);
+      setIsHydrating(false);
     })();
 
     return () => {
@@ -610,6 +620,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   return (
     <StoreContext.Provider
       value={{
+        isHydrating,
         profile,
         wallets,
         transactions,

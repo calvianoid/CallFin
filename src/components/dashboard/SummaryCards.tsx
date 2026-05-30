@@ -1,11 +1,13 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight } from "lucide-react";
 import { formatRupiah } from "@/lib/mock-data";
 import { Transaction } from "@/types";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
+import { useStore } from "@/lib/store";
 
 interface SummaryCardsProps {
   transactions: Transaction[];
@@ -13,6 +15,24 @@ interface SummaryCardsProps {
 
 export function SummaryCards({ transactions }: SummaryCardsProps) {
   const { t } = useTranslation();
+  const { isHydrating } = useStore();
+
+  if (isHydrating && transactions.length === 0) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <Card key={i} className="border-border/50">
+            <CardContent className="p-3 sm:p-4 space-y-2">
+              <Skeleton className="h-9 w-9 rounded-lg" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-3 w-16" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
   const totalIncome = transactions
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0);

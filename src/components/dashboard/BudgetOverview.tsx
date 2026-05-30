@@ -2,15 +2,40 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Budget } from "@/types";
 import { formatRupiah } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
+import { useStore } from "@/lib/store";
 
 interface BudgetOverviewProps {
   budgets: Budget[];
 }
 
 export function BudgetOverview({ budgets }: BudgetOverviewProps) {
+  const { isHydrating } = useStore();
+
+  if (isHydrating && budgets.length === 0) {
+    return (
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Budget Bulan Ini</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+              <Skeleton className="h-1.5 w-full rounded-full" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-2">

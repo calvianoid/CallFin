@@ -2,16 +2,45 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Goal } from "@/types";
 import { formatRupiah } from "@/lib/mock-data";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { id } from "date-fns/locale";
+import { useStore } from "@/lib/store";
 
 interface GoalsOverviewProps {
   goals: Goal[];
 }
 
 export function GoalsOverview({ goals }: GoalsOverviewProps) {
+  const { isHydrating } = useStore();
+
+  if (isHydrating && goals.length === 0) {
+    return (
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Financial Goals</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3.5 w-28" />
+                <Skeleton className="h-3.5 w-10" />
+              </div>
+              <Skeleton className="h-2 w-full rounded-full" />
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-2.5 w-40" />
+                <Skeleton className="h-2.5 w-16" />
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-2">
