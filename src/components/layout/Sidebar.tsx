@@ -15,6 +15,7 @@ import {
   Tag,
   Wallet as WalletIcon,
   Upload,
+  Rocket,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +32,7 @@ const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey;
   { href: "/goals", icon: Target, key: "nav.goals" },
   { href: "/categories", icon: Tag, key: "nav.categories" },
   { href: "/reports", icon: FileText, key: "nav.reports" },
+  { href: "/freedom", icon: Rocket, key: "nav.freedom" },
   { href: "/import", icon: Upload, key: "nav.dashboard", label: "Import" },
 ];
 
