@@ -104,8 +104,8 @@ export default function TransactionsPage() {
             ...wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon })),
           ]}
           placeholder={t("tx.allWallets")}
-          searchPlaceholder="Cari dompet..."
-          emptyMessage="Tidak ada dompet."
+          searchPlaceholder={t("common.searchWallet")}
+          emptyMessage={t("common.noWallet")}
           triggerClassName="w-[180px]"
         />
         <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
@@ -113,7 +113,7 @@ export default function TransactionsPage() {
             <TabsTrigger value="all">{t("tx.tab.all")}</TabsTrigger>
             <TabsTrigger value="income">{t("tx.tab.income")}</TabsTrigger>
             <TabsTrigger value="expense">{t("tx.tab.expense")}</TabsTrigger>
-            <TabsTrigger value="transfer">Transfer</TabsTrigger>
+            <TabsTrigger value="transfer">{t("tx.tab.transfer")}</TabsTrigger>
           </TabsList>
         </Tabs>
       </div>
@@ -218,7 +218,7 @@ export default function TransactionsPage() {
                             size="icon"
                             className="h-7 w-7 text-muted-foreground hover:text-primary"
                             onClick={() => setEditTx(tx)}
-                            title="Edit"
+                            title={t("tx.editTitle")}
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
@@ -228,7 +228,7 @@ export default function TransactionsPage() {
                           size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
                           onClick={() => deleteTransaction(tx.id)}
-                          title="Hapus"
+                          title={t("tx.deleteTitle")}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>

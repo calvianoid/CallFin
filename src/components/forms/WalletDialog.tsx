@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { Wallet, WalletType } from "@/types";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 
 interface WalletDialogProps {
@@ -30,11 +32,11 @@ interface WalletDialogProps {
   initial?: Wallet;
 }
 
-const WALLET_TYPES: { value: WalletType; label: string; icon: string }[] = [
-  { value: "cash", label: "Tunai", icon: "💵" },
-  { value: "bank", label: "Bank", icon: "🏦" },
-  { value: "ewallet", label: "E-Wallet", icon: "📱" },
-  { value: "credit", label: "Kartu Kredit", icon: "💳" },
+const WALLET_TYPES: { value: WalletType; labelKey: TranslationKey; icon: string }[] = [
+  { value: "cash", labelKey: "wallets.type.cash", icon: "💵" },
+  { value: "bank", labelKey: "wallets.type.bank", icon: "🏦" },
+  { value: "ewallet", labelKey: "wallets.type.ewallet", icon: "📱" },
+  { value: "credit", labelKey: "wallets.type.credit", icon: "💳" },
 ];
 
 const COLOR_OPTIONS = [
@@ -54,6 +56,7 @@ export function WalletDialog({
   initial,
 }: WalletDialogProps) {
   const { addWallet, updateWallet } = useStore();
+  const { t } = useTranslation();
   const isEdit = !!initial;
 
   const [name, setName] = useState(initial?.name || "");
@@ -97,20 +100,18 @@ export function WalletDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Dompet" : "Tambah Dompet"}</DialogTitle>
-          <DialogDescription>
-            Pisahkan saldo per dompet, akun bank, atau e-wallet.
-          </DialogDescription>
+          <DialogTitle>{isEdit ? t("walletDlg.title.edit") : t("walletDlg.title.add")}</DialogTitle>
+          <DialogDescription>{t("walletDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Dompet</Label>
+            <Label htmlFor="name">{t("walletDlg.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: BCA, OVO, Tunai"
+              placeholder={t("walletDlg.namePlaceholder")}
               required
               autoFocus
             />
@@ -118,7 +119,7 @@ export function WalletDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Tipe</Label>
+              <Label>{t("common.type")}</Label>
               <Select
                 value={type}
                 onValueChange={(v) => setType(v as WalletType)}
@@ -126,22 +127,22 @@ export function WalletDialog({
                 <SelectTrigger>
                   <SelectValue>
                     {(v) => {
-                      const t = WALLET_TYPES.find((x) => x.value === v);
-                      return t ? `${t.icon} ${t.label}` : "";
+                      const tt = WALLET_TYPES.find((x) => x.value === v);
+                      return tt ? `${tt.icon} ${t(tt.labelKey)}` : "";
                     }}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {WALLET_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.icon} {t.label}
+                  {WALLET_TYPES.map((tt) => (
+                    <SelectItem key={tt.value} value={tt.value}>
+                      {tt.icon} {t(tt.labelKey)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="balance">Saldo (Rp)</Label>
+              <Label htmlFor="balance">{t("walletDlg.initialBalance")}</Label>
               <CurrencyInput
                 id="balance"
                 value={balance}
@@ -152,7 +153,7 @@ export function WalletDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Warna</Label>
+            <Label>{t("common.color")}</Label>
             <div className="flex flex-wrap gap-2">
               {COLOR_OPTIONS.map((c) => (
                 <button
@@ -177,9 +178,9 @@ export function WalletDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">{isEdit ? "Simpan" : "Tambah"}</Button>
+            <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

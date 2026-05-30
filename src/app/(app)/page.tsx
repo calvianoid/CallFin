@@ -5,8 +5,10 @@ import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageSquare, LayoutDashboard } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   return (
     <>
       {/* Mobile / Tablet: Tabs */}
@@ -17,7 +19,7 @@ export default function DashboardPage() {
               <MessageSquare className="h-3.5 w-3.5" /> Chat
             </TabsTrigger>
             <TabsTrigger value="dashboard" className="gap-1.5">
-              <LayoutDashboard className="h-3.5 w-3.5" /> Dashboard
+              <LayoutDashboard className="h-3.5 w-3.5" /> {t("page.dashboardTab")}
             </TabsTrigger>
           </TabsList>
 

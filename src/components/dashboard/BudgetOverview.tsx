@@ -7,6 +7,7 @@ import { Budget } from "@/types";
 import { formatRupiah } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { computeBudgetSpent } from "@/lib/budget-utils";
 
 interface BudgetOverviewProps {
@@ -15,12 +16,13 @@ interface BudgetOverviewProps {
 
 export function BudgetOverview({ budgets }: BudgetOverviewProps) {
   const { isHydrating, transactions } = useStore();
+  const { t } = useTranslation();
 
   if (isHydrating && budgets.length === 0) {
     return (
       <Card className="border-border/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Budget Bulan Ini</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("dashboard.monthBudget")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -70,7 +72,7 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
                 )}
               />
               {isDanger && (
-                <p className="text-[10px] text-red-500">⚠️ Budget hampir habis!</p>
+                <p className="text-[10px] text-red-500">{t("budget.warnAlmost")}</p>
               )}
             </div>
           );

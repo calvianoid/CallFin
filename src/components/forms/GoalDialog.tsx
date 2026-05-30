@@ -15,6 +15,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Goal } from "@/types";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface GoalDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ interface GoalDialogProps {
 
 export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
   const { addGoal, updateGoal } = useStore();
+  const { t } = useTranslation();
   const isEdit = !!initial;
 
   const [name, setName] = useState(initial?.goal_name || "");
@@ -74,21 +76,19 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? "Edit Goal" : "Tambah Financial Goal"}
+            {isEdit ? t("goalDlg.title.edit") : t("goalDlg.title.add")}
           </DialogTitle>
-          <DialogDescription>
-            Tetapkan target keuangan dan AI akan membantu memantau progress-nya.
-          </DialogDescription>
+          <DialogDescription>{t("goalDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Goal</Label>
+            <Label htmlFor="name">{t("goalDlg.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Contoh: Dana darurat, Liburan ke Bali"
+              placeholder={t("goalDlg.namePlaceholder")}
               required
               autoFocus
             />
@@ -96,7 +96,7 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="target">Target (Rp)</Label>
+              <Label htmlFor="target">{t("goalDlg.target")}</Label>
               <CurrencyInput
                 id="target"
                 value={target}
@@ -106,7 +106,7 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="current">Saldo Awal (Rp)</Label>
+              <Label htmlFor="current">{t("goalDlg.initial")}</Label>
               <CurrencyInput
                 id="current"
                 value={current}
@@ -117,7 +117,7 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deadline">Target Tanggal</Label>
+            <Label htmlFor="deadline">{t("goalDlg.deadline")}</Label>
             <Input
               id="deadline"
               type="date"
@@ -133,10 +133,10 @@ export function GoalDialog({ open, onOpenChange, initial }: GoalDialogProps) {
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
             <Button type="submit">
-              {isEdit ? "Simpan Perubahan" : "Tambah Goal"}
+              {isEdit ? t("common.saveChanges") : t("goalDlg.title.add")}
             </Button>
           </DialogFooter>
         </form>

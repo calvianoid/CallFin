@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Loader2, MailCheck } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
 
 export default function LoginPage() {
   return (
@@ -19,6 +20,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -31,9 +33,9 @@ function LoginForm() {
     const confirm = searchParams.get("confirm");
     if (confirm) {
       setEmail(confirm);
-      setInfo(`Akun ${confirm} berhasil dibuat. Klik link konfirmasi di email-mu, lalu kembali ke sini untuk masuk.`);
+      setInfo(t("auth.signInConfirmed", { email: confirm }));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -73,9 +75,9 @@ function LoginForm() {
           </div>
         </div>
         <div>
-          <CardTitle className="text-2xl">Selamat datang kembali</CardTitle>
+          <CardTitle className="text-2xl">{t("auth.signInTitle")}</CardTitle>
           <CardDescription className="mt-1">
-            Masuk ke akun keuangan pintarmu
+            {t("auth.signInSubtitle")}
           </CardDescription>
         </div>
       </CardHeader>
@@ -94,18 +96,18 @@ function LoginForm() {
             </div>
           )}
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="email">Email</label>
+            <label className="text-sm font-medium" htmlFor="email">{t("auth.email")}</label>
             <Input
               id="email"
               type="email"
-              placeholder="kamu@email.com"
+              placeholder={t("auth.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="password">Password</label>
+            <label className="text-sm font-medium" htmlFor="password">{t("auth.password")}</label>
             <Input
               id="password"
               type="password"
@@ -116,16 +118,16 @@ function LoginForm() {
             />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Masuk"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.signIn")}
           </Button>
         </form>
       </CardContent>
 
       <CardFooter className="flex justify-center pt-0">
         <p className="text-sm text-muted-foreground">
-          Belum punya akun?{" "}
+          {t("auth.noAccount")}{" "}
           <Link href="/register" className="text-primary font-medium hover:underline">
-            Daftar sekarang
+            {t("auth.signUpNow")}
           </Link>
         </p>
       </CardFooter>

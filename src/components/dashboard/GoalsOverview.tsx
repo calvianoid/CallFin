@@ -5,9 +5,9 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Goal } from "@/types";
 import { formatRupiah } from "@/lib/mock-data";
-import { format, parseISO, differenceInDays } from "date-fns";
-import { id } from "date-fns/locale";
+import { parseISO, differenceInDays } from "date-fns";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface GoalsOverviewProps {
   goals: Goal[];
@@ -15,12 +15,13 @@ interface GoalsOverviewProps {
 
 export function GoalsOverview({ goals }: GoalsOverviewProps) {
   const { isHydrating } = useStore();
+  const { t, locale } = useTranslation();
 
   if (isHydrating && goals.length === 0) {
     return (
       <Card className="border-border/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Financial Goals</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("dashboard.financialGoals")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {Array.from({ length: 2 }).map((_, i) => (
@@ -60,8 +61,10 @@ export function GoalsOverview({ goals }: GoalsOverviewProps) {
               </div>
               <Progress value={pct} className="h-2 [&>div]:bg-primary" />
               <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>{formatRupiah(g.current_amount)} dari {formatRupiah(g.target_amount)}</span>
-                <span>{daysLeft > 0 ? `${daysLeft} hari lagi` : "Tenggat lewat"}</span>
+                <span>
+                  {formatRupiah(g.current_amount)} {locale === "en" ? "of" : "dari"} {formatRupiah(g.target_amount)}
+                </span>
+                <span>{daysLeft > 0 ? t("goals.daysLeft", { n: daysLeft }) : t("goals.overdueShort")}</span>
               </div>
             </div>
           );

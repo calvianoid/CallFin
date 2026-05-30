@@ -12,6 +12,7 @@ import {
   Legend,
 } from "recharts";
 import { MonthlyData } from "@/types";
+import { useTranslation } from "@/lib/i18n/context";
 
 interface FinancialChartProps {
   data: MonthlyData[];
@@ -30,11 +31,12 @@ function formatYAxis(value: number) {
 }
 
 export function FinancialChart({ data }: FinancialChartProps) {
+  const { t } = useTranslation();
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold">Tren Arus Kas</CardTitle>
-        <p className="text-xs text-muted-foreground">Pemasukan vs Pengeluaran — 6 bulan terakhir</p>
+        <CardTitle className="text-sm font-semibold">{t("dashboard.cashFlow")}</CardTitle>
+        <p className="text-xs text-muted-foreground">{t("dashboard.cashFlowDesc")}</p>
       </CardHeader>
       <CardContent className="pr-2">
         <ResponsiveContainer width="100%" height={200}>
@@ -55,7 +57,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
             <Tooltip
               formatter={(value, name) => [
                 formatTooltipValue(Number(value)),
-                name === "income" ? "Pemasukan" : "Pengeluaran",
+                name === "income" ? t("reports.income") : t("reports.expense"),
               ]}
               contentStyle={{
                 fontSize: 12,
@@ -65,7 +67,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
               }}
             />
             <Legend
-              formatter={(value) => (value === "income" ? "Pemasukan" : "Pengeluaran")}
+              formatter={(value) => (value === "income" ? t("reports.income") : t("reports.expense"))}
               iconType="circle"
               iconSize={8}
               wrapperStyle={{ fontSize: 11 }}

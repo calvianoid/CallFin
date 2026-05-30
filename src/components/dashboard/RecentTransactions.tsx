@@ -8,7 +8,7 @@ import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { id } from "date-fns/locale";
+import { id, enUS } from "date-fns/locale";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 
@@ -18,7 +18,8 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const { isHydrating } = useStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const dateLocale = locale === "en" ? enUS : id;
   const recent = [...transactions]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 6);
@@ -27,7 +28,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
     return (
       <Card className="border-border/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">Transaksi Terbaru</CardTitle>
+          <CardTitle className="text-sm font-semibold">{t("dashboard.recentTransactions")}</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/50">
@@ -81,7 +82,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                     {tx.category}
                   </Badge>
                   <span className="text-[10px] text-muted-foreground">
-                    {format(parseISO(tx.date), "d MMM", { locale: id })}
+                    {format(parseISO(tx.date), "d MMM", { locale: dateLocale })}
                   </span>
                 </div>
               </div>

@@ -14,7 +14,7 @@ import { useTranslation } from "@/lib/i18n/context";
 
 export default function CategoriesPage() {
   const { categories, transactions, budgets, deleteCategory, isHydrating } = useStore();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [dialog, setDialog] = useState<{ open: boolean; editing?: Category; defaultType?: CategoryType }>({ open: false });
 
   const userVisible = categories.filter((c) => !c.isInternal);
@@ -37,11 +37,18 @@ export default function CategoriesPage() {
   function handleDelete(c: Category) {
     const u = usage(c);
     if (u.txCount > 0 || u.budgetCount > 0) {
-      alert(`Kategori "${c.name}" masih dipakai (${u.txCount} transaksi, ${u.budgetCount} budget). Hapus atau ubah dulu yang pakai kategori ini.`);
+      alert(
+        locale === "en"
+          ? `Category "${c.name}" is still in use (${u.txCount} transactions, ${u.budgetCount} budgets). Remove or change them first.`
+          : `Kategori "${c.name}" masih dipakai (${u.txCount} transaksi, ${u.budgetCount} budget). Hapus atau ubah dulu yang pakai kategori ini.`,
+      );
       return;
     }
     if (c.isDefault) {
-      if (!confirm(`Hapus kategori default "${c.name}"? Bisa kamu tambahkan lagi nanti.`)) return;
+      const msg = locale === "en"
+        ? `Delete default category "${c.name}"? You can re-add it later.`
+        : `Hapus kategori default "${c.name}"? Bisa kamu tambahkan lagi nanti.`;
+      if (!confirm(msg)) return;
     }
     deleteCategory(c.id);
   }
@@ -78,7 +85,7 @@ export default function CategoriesPage() {
             size="icon"
             className="h-8 w-8 text-muted-foreground hover:text-destructive"
             onClick={() => handleDelete(c)}
-            title={inUse ? "Tidak bisa dihapus — masih dipakai" : "Hapus kategori"}
+            title={inUse ? t("cat.deleteInUse") : t("cat.deleteOne")}
           >
             <Trash2 className="h-3.5 w-3.5" />
           </Button>

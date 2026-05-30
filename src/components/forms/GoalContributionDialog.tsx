@@ -15,6 +15,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { formatRupiah } from "@/lib/mock-data";
 import { PiggyBank, Sparkles } from "lucide-react";
 
@@ -39,6 +40,7 @@ export function GoalContributionDialog({
   onSaved,
 }: GoalContributionDialogProps) {
   const { goals, wallets, addGoalContribution } = useStore();
+  const { t } = useTranslation();
 
   const [selectedGoalId, setSelectedGoalId] = useState(
     goalId || goals[0]?.id || "",
@@ -84,17 +86,14 @@ export function GoalContributionDialog({
             ) : (
               <PiggyBank className="h-4 w-4 text-violet-600" />
             )}
-            {fromAI ? "Konfirmasi Setor ke Goal" : "Tambah Dana ke Goal"}
+            {fromAI ? t("contribDlg.title.ai") : t("contribDlg.title")}
           </DialogTitle>
-          <DialogDescription>
-            Saldo akan ditarik dari dompet pilihan dan tercatat di history
-            transaksi.
-          </DialogDescription>
+          <DialogDescription>{t("contribDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Goal Tujuan</Label>
+            <Label>{t("contribDlg.goal")}</Label>
             <Combobox
               value={selectedGoalId}
               onValueChange={setSelectedGoalId}
@@ -102,9 +101,9 @@ export function GoalContributionDialog({
                 const pct = ((g.current_amount / g.target_amount) * 100).toFixed(0);
                 return { value: g.id, label: g.goal_name, icon: "🎯", hint: `(${pct}%)` };
               })}
-              placeholder="Pilih goal"
-              searchPlaceholder="Cari goal..."
-              emptyMessage="Belum ada goal."
+              placeholder={t("contribDlg.pickGoal")}
+              searchPlaceholder={t("contribDlg.searchGoal")}
+              emptyMessage={t("contribDlg.noGoal")}
               disabled={!!goalId && goals.some((g) => g.id === goalId)}
               triggerClassName="w-full"
             />
@@ -113,19 +112,19 @@ export function GoalContributionDialog({
           {goal && (
             <div className="bg-muted rounded-lg p-3 text-xs space-y-1">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Saat ini</span>
+                <span className="text-muted-foreground">{t("contribDlg.current")}</span>
                 <span className="font-medium">
                   {formatRupiah(goal.current_amount)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Target</span>
+                <span className="text-muted-foreground">{t("goals.target")}</span>
                 <span className="font-medium">
                   {formatRupiah(goal.target_amount)}
                 </span>
               </div>
               <div className="flex justify-between border-t border-border pt-1 mt-1">
-                <span className="text-muted-foreground">Setelah setor</span>
+                <span className="text-muted-foreground">{t("contribDlg.afterTopup")}</span>
                 <span className="font-semibold text-primary">
                   {formatRupiah(goal.current_amount + num)}
                 </span>
@@ -134,7 +133,7 @@ export function GoalContributionDialog({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Jumlah (Rp)</Label>
+            <Label htmlFor="amount">{t("common.amount")}</Label>
             <CurrencyInput
               id="amount"
               value={amount}
@@ -146,7 +145,7 @@ export function GoalContributionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Ambil dari Dompet</Label>
+            <Label>{t("contribDlg.fromWallet")}</Label>
             <Combobox
               value={walletId}
               onValueChange={setWalletId}
@@ -156,25 +155,23 @@ export function GoalContributionDialog({
                 icon: w.icon,
                 hint: formatRupiah(w.balance),
               }))}
-              placeholder="Pilih dompet"
-              searchPlaceholder="Cari dompet..."
-              emptyMessage="Tidak ada dompet."
+              placeholder={t("common.pickWallet")}
+              searchPlaceholder={t("common.searchWallet")}
+              emptyMessage={t("common.noWallet")}
               triggerClassName="w-full"
             />
             {insufficient && (
-              <p className="text-xs text-amber-600">
-                ⚠ Saldo dompet tidak cukup, tapi masih bisa lanjut.
-              </p>
+              <p className="text-xs text-amber-600">{t("contribDlg.notEnough")}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note">Catatan (opsional)</Label>
+            <Label htmlFor="note">{t("common.noteOptional")}</Label>
             <Input
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Misal: Sisa gaji bulan ini"
+              placeholder={t("contribDlg.notePlaceholder")}
             />
           </div>
 
@@ -184,13 +181,13 @@ export function GoalContributionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!num || !selectedGoalId || !walletId}
             >
-              {fromAI ? "Konfirmasi & Setor" : "Setor ke Goal"}
+              {fromAI ? t("contribDlg.submit.ai") : t("contribDlg.submit")}
             </Button>
           </DialogFooter>
         </form>

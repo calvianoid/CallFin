@@ -24,6 +24,7 @@ import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/types";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { Sparkles } from "lucide-react";
 
 interface TransactionDialogProps {
@@ -42,6 +43,7 @@ export function TransactionDialog({
   onSaved,
 }: TransactionDialogProps) {
   const { wallets, categories, addTransaction, updateTransaction } = useStore();
+  const { t } = useTranslation();
   const isEdit = !!initial?.id;
 
   const [type, setType] = useState<TransactionType>(initial?.type || "expense");
@@ -132,17 +134,17 @@ export function TransactionDialog({
           <DialogTitle className="flex items-center gap-2">
             {fromAI && <Sparkles className="h-4 w-4 text-primary" />}
             {fromAI
-              ? "Konfirmasi Transaksi dari AI"
+              ? t("txDlg.title.ai")
               : isEdit
-                ? "Edit Transaksi"
-                : "Tambah Transaksi"}
+                ? t("txDlg.title.edit")
+                : t("txDlg.title.add")}
           </DialogTitle>
           <DialogDescription>
             {fromAI
-              ? "AI berhasil membaca transaksimu. Cek dan ubah jika perlu, lalu konfirmasi."
+              ? t("txDlg.desc.ai")
               : isEdit
-                ? "Ubah detail transaksi. Saldo dompet & budget akan disesuaikan otomatis."
-                : "Catat pemasukan atau pengeluaranmu secara manual."}
+                ? t("txDlg.desc.edit")
+                : t("txDlg.desc.add")}
           </DialogDescription>
         </DialogHeader>
 
@@ -152,13 +154,13 @@ export function TransactionDialog({
             onValueChange={(v) => setType(v as TransactionType)}
           >
             <TabsList className="grid grid-cols-2 w-full">
-              <TabsTrigger value="expense">📉 Pengeluaran</TabsTrigger>
-              <TabsTrigger value="income">📈 Pemasukan</TabsTrigger>
+              <TabsTrigger value="expense">{t("txDlg.expense")}</TabsTrigger>
+              <TabsTrigger value="income">{t("txDlg.income")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Jumlah (Rp)</Label>
+            <Label htmlFor="amount">{t("common.amount")}</Label>
             <CurrencyInput
               id="amount"
               value={amount}
@@ -171,44 +173,44 @@ export function TransactionDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Kategori</Label>
+              <Label>{t("tx.col.category")}</Label>
               <Combobox
                 value={category}
                 onValueChange={setCategory}
                 items={availableCategories.map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
-                placeholder="Pilih kategori"
-                searchPlaceholder="Cari kategori..."
-                emptyMessage="Tidak ada kategori."
+                placeholder={t("common.pickCategory")}
+                searchPlaceholder={t("common.searchCategory")}
+                emptyMessage={t("common.noCategory")}
                 triggerClassName="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Dompet</Label>
+              <Label>{t("tx.col.wallet")}</Label>
               <Combobox
                 value={walletId}
                 onValueChange={setWalletId}
                 items={wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
-                placeholder="Pilih dompet"
-                searchPlaceholder="Cari dompet..."
-                emptyMessage="Tidak ada dompet."
+                placeholder={t("common.pickWallet")}
+                searchPlaceholder={t("common.searchWallet")}
+                emptyMessage={t("common.noWallet")}
                 triggerClassName="w-full"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Deskripsi</Label>
+            <Label htmlFor="description">{t("common.description")}</Label>
             <Input
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Contoh: Makan siang di warung Padang"
+              placeholder={t("txDlg.descPlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="date">Tanggal</Label>
+            <Label htmlFor="date">{t("common.date")}</Label>
             <Input
               id="date"
               type="date"
@@ -223,14 +225,14 @@ export function TransactionDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
             <Button type="submit">
               {fromAI
-                ? "Konfirmasi & Simpan"
+                ? t("txDlg.submit.ai")
                 : isEdit
-                  ? "Simpan Perubahan"
-                  : "Simpan"}
+                  ? t("common.saveChanges")
+                  : t("common.save")}
             </Button>
           </DialogFooter>
         </form>

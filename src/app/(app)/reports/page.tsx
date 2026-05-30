@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
 import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import {
   Download, TrendingUp, TrendingDown, Sparkles, PiggyBank,
   Calendar, Activity, Receipt, ArrowUpRight, ArrowDownRight,
@@ -29,6 +30,7 @@ const CHART_COLORS = [
 
 export default function ReportsPage() {
   const { transactions, budgets, goals, wallets, isHydrating } = useStore();
+  const { t, locale } = useTranslation();
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -290,7 +292,8 @@ export default function ReportsPage() {
     setTimeout(() => { document.title = oldTitle; }, 500);
   }
 
-  const todayLabel = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date());
+  const todayLabel = new Intl.DateTimeFormat(locale === "en" ? "en-US" : "id-ID", { dateStyle: "long" }).format(new Date());
+  const printedLabel = locale === "en" ? "Printed" : "Dicetak";
 
   // Skeleton while hydrating from Supabase
   if (isHydrating && transactions.length === 0) {
@@ -356,23 +359,23 @@ export default function ReportsPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="font-bold text-base">CallFin</p>
-            <p className="text-xs text-gray-600">Laporan Keuangan — {formatMonthLabel(month)}</p>
+            <p className="text-xs text-gray-600">{t("reports.title")} — {formatMonthLabel(month)}</p>
           </div>
-          <p className="text-xs text-gray-600">Dicetak {todayLabel}</p>
+          <p className="text-xs text-gray-600">{printedLabel} {todayLabel}</p>
         </div>
       </div>
 
       <div className="flex items-center justify-between gap-3 no-print">
         <div>
-          <h1 className="text-lg sm:text-xl font-bold">Laporan Keuangan</h1>
+          <h1 className="text-lg sm:text-xl font-bold">{t("reports.title")}</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Ringkasan {formatMonthLabel(month)}
+            {t("reports.subtitle", { month: formatMonthLabel(month) })}
           </p>
         </div>
         <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handlePrint}>
           <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">Export PDF</span>
-          <span className="sm:hidden">Export</span>
+          <span className="hidden sm:inline">{t("reports.export")}</span>
+          <span className="sm:hidden">{t("reports.exportShort")}</span>
         </Button>
       </div>
 
@@ -384,29 +387,29 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard
           icon={<Activity className="h-4 w-4 text-primary" />}
-          label="Net Bulan Ini"
+          label={t("reports.netMonth")}
           value={formatRupiah(stats.net)}
-          subtitle={stats.net >= 0 ? "Surplus" : "Defisit"}
+          subtitle={stats.net >= 0 ? t("reports.surplus") : t("reports.deficit")}
           accent={stats.net >= 0 ? "positive" : "negative"}
         />
         <KpiCard
           icon={<PiggyBank className="h-4 w-4 text-violet-600" />}
-          label="Savings Rate"
+          label={t("reports.savingsRate")}
           value={`${stats.savingsRate.toFixed(0)}%`}
-          subtitle={stats.savingsRate >= 20 ? "Target tercapai" : "Belum ideal"}
+          subtitle={stats.savingsRate >= 20 ? t("reports.targetMet") : t("reports.notIdeal")}
           accent={stats.savingsRate >= 20 ? "positive" : "neutral"}
         />
         <KpiCard
           icon={<Receipt className="h-4 w-4 text-sky-600" />}
-          label="Transaksi"
+          label={t("reports.txCount")}
           value={String(stats.inMonth.length)}
-          subtitle={`${stats.activeDays} hari aktif`}
+          subtitle={`${stats.activeDays} ${t("reports.activeDays")}`}
         />
         <KpiCard
           icon={<Calendar className="h-4 w-4 text-amber-600" />}
-          label="Rata-rata/Hari"
+          label={t("reports.dailyAvg")}
           value={formatRupiah(stats.dailyAvgExpense)}
-          subtitle="Berdasar hari aktif"
+          subtitle={t("reports.basedOnActive")}
         />
       </div>
 
@@ -414,21 +417,21 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <SummaryCard
           icon={<TrendingUp className="h-4 w-4 text-green-600" />}
-          label="Pemasukan"
+          label={t("reports.income")}
           value={formatRupiah(stats.totalIncome)}
           delta={deltaPct(stats.totalIncome, prevStats.prevIncome)}
           color="text-green-600"
         />
         <SummaryCard
           icon={<TrendingDown className="h-4 w-4 text-red-500" />}
-          label="Pengeluaran"
+          label={t("reports.expense")}
           value={formatRupiah(stats.totalExpense)}
           delta={deltaPct(stats.totalExpense, prevStats.prevExpense)}
           deltaInvert
         />
         <SummaryCard
           icon={<PiggyBank className="h-4 w-4 text-violet-600" />}
-          label="Setoran Goal"
+          label={t("reports.goalSavings")}
           value={formatRupiah(stats.totalSavings)}
           color="text-violet-600"
         />
@@ -439,12 +442,12 @@ export default function ReportsPage() {
         <CardHeader className="pb-2">
           <CardTitle className="text-sm flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            Analisis AI — {formatMonthLabel(month)}
+            {t("reports.aiAnalysis", { month: formatMonthLabel(month) })}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid sm:grid-cols-2 gap-2">
           {insights.length === 0 ? (
-            <p className="text-sm text-muted-foreground col-span-2">Belum ada insight untuk bulan ini.</p>
+            <p className="text-sm text-muted-foreground col-span-2">{t("reports.noInsight")}</p>
           ) : insights.map((ins, i) => (
             <div
               key={i}
@@ -470,11 +473,11 @@ export default function ReportsPage() {
         {/* Donut */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Distribusi Pengeluaran</CardTitle>
+            <CardTitle className="text-sm">{t("reports.expenseDistribution")}</CardTitle>
           </CardHeader>
           <CardContent>
             {donutData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-10">Belum ada pengeluaran.</p>
+              <p className="text-sm text-muted-foreground text-center py-10">{t("reports.noExpense")}</p>
             ) : (
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <div className="w-full sm:w-48 h-48">
@@ -520,7 +523,7 @@ export default function ReportsPage() {
         {/* 6-month trend */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Tren 6 Bulan Terakhir</CardTitle>
+            <CardTitle className="text-sm">{t("reports.trend6mo")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-56">
@@ -528,14 +531,14 @@ export default function ReportsPage() {
                 <BarChart data={sixMonthTrend} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}jt`} />
+                  <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(0)}${locale === "en" ? "M" : "jt"}`} />
                   <Tooltip
                     contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                     formatter={(v) => formatRupiah(Number(v) || 0)}
                   />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="income" name="Pemasukan" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="expense" name="Pengeluaran" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="income" name={t("reports.income")} fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="expense" name={t("reports.expense")} fill="#ef4444" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -546,7 +549,7 @@ export default function ReportsPage() {
       {/* ─── Daily pattern ───────────────────────────────────────────────── */}
       <Card className="border-border/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Aktivitas Harian — {formatMonthLabel(month)}</CardTitle>
+          <CardTitle className="text-sm">{t("reports.dailyActivity")} — {formatMonthLabel(month)}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-56">
@@ -554,15 +557,15 @@ export default function ReportsPage() {
               <LineChart data={stats.dailySeries} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={Math.floor(stats.daysInMonth / 10)} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}jt`} />
+                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}${locale === "en" ? "M" : "jt"}`} />
                 <Tooltip
                   contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
                   formatter={(v) => formatRupiah(Number(v) || 0)}
-                  labelFormatter={(d) => `Tanggal ${d}`}
+                  labelFormatter={(d) => `${locale === "en" ? "Day" : "Tanggal"} ${d}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="expense" name="Pengeluaran" stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="income" name="Pemasukan" stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="expense" name={t("reports.expense")} stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
+                <Line type="monotone" dataKey="income" name={t("reports.income")} stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -574,11 +577,11 @@ export default function ReportsPage() {
         {/* Top 5 expenses */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">5 Pengeluaran Terbesar</CardTitle>
+            <CardTitle className="text-sm">{t("reports.top5Expense")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {stats.topExpenses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Belum ada pengeluaran.</p>
+              <p className="text-sm text-muted-foreground text-center py-6">{t("reports.noExpense")}</p>
             ) : stats.topExpenses.map((tx) => {
               const w = wallets.find((x) => x.id === tx.wallet_id);
               return (
@@ -605,11 +608,11 @@ export default function ReportsPage() {
         {/* Wallet activity */}
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Aktivitas Dompet</CardTitle>
+            <CardTitle className="text-sm">{t("reports.walletActivity")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {stats.walletActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Belum ada aktivitas dompet.</p>
+              <p className="text-sm text-muted-foreground text-center py-6">{locale === "en" ? "No wallet activity yet." : "Belum ada aktivitas dompet."}</p>
             ) : stats.walletActivity.map((w, i) => (
               <div key={i} className="space-y-1">
                 <div className="flex items-center justify-between text-sm">
@@ -644,7 +647,7 @@ export default function ReportsPage() {
       {budgetStatus.length > 0 && (
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Kepatuhan Budget</CardTitle>
+            <CardTitle className="text-sm">{t("reports.budgetCompliance")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2.5">
             {budgetStatus.map((b) => {
@@ -657,8 +660,8 @@ export default function ReportsPage() {
                       <Badge variant="secondary" className={cn("text-[10px] h-4", CATEGORY_COLORS[b.category] || "bg-gray-100 text-gray-700")}>
                         {b.category}
                       </Badge>
-                      {isDanger && <span className="text-[10px] font-bold text-red-500">OVER</span>}
-                      {isWarning && <span className="text-[10px] font-bold text-amber-600">WASPADA</span>}
+                      {isDanger && <span className="text-[10px] font-bold text-red-500">{locale === "en" ? "OVER" : "OVER"}</span>}
+                      {isWarning && <span className="text-[10px] font-bold text-amber-600">{locale === "en" ? "WATCH" : "WASPADA"}</span>}
                     </span>
                     <span className="text-xs tabular-nums">
                       <span className="font-semibold">{formatRupiah(b.spent)}</span>
@@ -676,11 +679,11 @@ export default function ReportsPage() {
       {/* ─── Expense by category detail ──────────────────────────────────── */}
       <Card className="border-border/50">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Pengeluaran per Kategori</CardTitle>
+          <CardTitle className="text-sm">{t("reports.byCategory")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2.5">
           {stats.categoryBreakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">Belum ada pengeluaran di bulan ini.</p>
+            <p className="text-sm text-muted-foreground text-center py-4">{t("reports.noExpense")}</p>
           ) : stats.categoryBreakdown.map((c, i) => {
             const pct = (c.amount / stats.totalBreakdown) * 100;
             const prev = prevStats.prevByCat[c.category];
@@ -714,7 +717,7 @@ export default function ReportsPage() {
       {stats.incomeBreakdown.length > 0 && (
         <Card className="border-border/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Pemasukan per Kategori</CardTitle>
+            <CardTitle className="text-sm">{t("reports.incomeByCategory")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {stats.incomeBreakdown.map((c, i) => {
@@ -741,7 +744,7 @@ export default function ReportsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <PiggyBank className="h-4 w-4 text-violet-600" />
-              Setoran Goal Bulan Ini
+              {t("reports.savingsThisMonth")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">

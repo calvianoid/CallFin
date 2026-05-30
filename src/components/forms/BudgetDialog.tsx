@@ -23,6 +23,7 @@ import {
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Budget } from "@/types";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { AlertCircle } from "lucide-react";
 
 interface BudgetDialogProps {
@@ -37,6 +38,7 @@ export function BudgetDialog({
   initial,
 }: BudgetDialogProps) {
   const { addBudget, updateBudget, budgets, categories } = useStore();
+  const { t } = useTranslation();
   const isEdit = !!initial;
 
   const currentMonth = new Date().toISOString().slice(0, 7);
@@ -105,45 +107,38 @@ export function BudgetDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Budget" : "Tambah Budget"}</DialogTitle>
-          <DialogDescription>
-            Tentukan batas pengeluaran per kategori untuk bulan ini.
-          </DialogDescription>
+          <DialogTitle>{isEdit ? t("budgetDlg.title.edit") : t("budgetDlg.title.add")}</DialogTitle>
+          <DialogDescription>{t("budgetDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Kategori</Label>
+            <Label>{t("tx.col.category")}</Label>
             <Combobox
               value={category}
               onValueChange={setCategory}
               items={expenseCategories
                 .filter((c) => !usedCategories.has(c.name))
                 .map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
-              placeholder="Pilih kategori"
-              searchPlaceholder="Cari kategori..."
-              emptyMessage="Tidak ada kategori tersisa."
+              placeholder={t("common.pickCategory")}
+              searchPlaceholder={t("common.searchCategory")}
+              emptyMessage={t("budgetDlg.noCategoryLeft")}
               disabled={isEdit || allUsed}
               triggerClassName="w-full"
             />
             {isEdit && (
-              <p className="text-xs text-muted-foreground">
-                Kategori tidak bisa diubah saat edit.
-              </p>
+              <p className="text-xs text-muted-foreground">{t("budgetDlg.lockedCategory")}</p>
             )}
             {allUsed && (
               <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
                 <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>
-                  Semua kategori sudah ada budgetnya untuk bulan ini. Edit yang
-                  sudah ada saja.
-                </span>
+                <span>{t("budgetDlg.allUsed")}</span>
               </div>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="limit">Batas Pengeluaran (Rp)</Label>
+            <Label htmlFor="limit">{t("budgetDlg.limit")}</Label>
             <CurrencyInput
               id="limit"
               value={limit}
@@ -160,10 +155,10 @@ export function BudgetDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={!isEdit && allUsed}>
-              {isEdit ? "Simpan Perubahan" : "Tambah Budget"}
+              {isEdit ? t("common.saveChanges") : t("budgetDlg.title.add")}
             </Button>
           </DialogFooter>
         </form>

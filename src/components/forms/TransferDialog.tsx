@@ -15,6 +15,7 @@ import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { formatRupiah } from "@/lib/mock-data";
 import { ArrowRight, Sparkles, ArrowLeftRight } from "lucide-react";
 
@@ -38,6 +39,7 @@ export function TransferDialog({
   onSaved,
 }: TransferDialogProps) {
   const { wallets, addTransfer } = useStore();
+  const { t } = useTranslation();
 
   const [fromId, setFromId] = useState(defaultFromId || wallets[0]?.id || "");
   const [toId, setToId] = useState(defaultToId || wallets[1]?.id || "");
@@ -73,7 +75,7 @@ export function TransferDialog({
     e.preventDefault();
     if (!num || !fromId || !toId) return;
     if (sameWallet) {
-      setError("Dompet asal dan tujuan tidak boleh sama.");
+      setError(t("transferDlg.sameWalletErr"));
       return;
     }
     addTransfer(fromId, toId, num, note || undefined);
@@ -96,31 +98,28 @@ export function TransferDialog({
             ) : (
               <ArrowLeftRight className="h-4 w-4 text-primary" />
             )}
-            {fromAI ? "Konfirmasi Transfer" : "Transfer Antar Dompet"}
+            {fromAI ? t("transferDlg.title.ai") : t("transferDlg.title")}
           </DialogTitle>
-          <DialogDescription>
-            Pindahkan saldo dari satu dompet ke dompet lainnya. Tidak dihitung
-            sebagai pemasukan maupun pengeluaran.
-          </DialogDescription>
+          <DialogDescription>{t("transferDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* From / To with swap button */}
           <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
             <div className="space-y-2">
-              <Label>Dari</Label>
+              <Label>{t("transferDlg.from")}</Label>
               <Combobox
                 value={fromId}
                 onValueChange={setFromId}
                 items={wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
-                placeholder="Pilih dompet"
-                searchPlaceholder="Cari dompet..."
-                emptyMessage="Tidak ada dompet."
+                placeholder={t("common.pickWallet")}
+                searchPlaceholder={t("common.searchWallet")}
+                emptyMessage={t("common.noWallet")}
                 triggerClassName="w-full"
               />
               {fromWallet && (
                 <p className="text-[10px] text-muted-foreground tabular-nums">
-                  Saldo: {formatRupiah(fromWallet.balance)}
+                  {t("common.balance")}: {formatRupiah(fromWallet.balance)}
                 </p>
               )}
             </div>
@@ -131,41 +130,39 @@ export function TransferDialog({
               size="icon"
               className="h-9 w-9 mb-6"
               onClick={swap}
-              title="Tukar"
+              title={t("transferDlg.swap")}
             >
               <ArrowLeftRight className="h-4 w-4" />
             </Button>
 
             <div className="space-y-2">
-              <Label>Ke</Label>
+              <Label>{t("transferDlg.to")}</Label>
               <Combobox
                 value={toId}
                 onValueChange={setToId}
                 items={wallets
                   .filter((w) => w.id !== fromId)
                   .map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
-                placeholder="Pilih dompet"
-                searchPlaceholder="Cari dompet..."
-                emptyMessage="Tidak ada dompet lain."
+                placeholder={t("common.pickWallet")}
+                searchPlaceholder={t("common.searchWallet")}
+                emptyMessage={t("transferDlg.noOther")}
                 triggerClassName="w-full"
               />
               {toWallet && (
                 <p className="text-[10px] text-muted-foreground tabular-nums">
-                  Saldo: {formatRupiah(toWallet.balance)}
+                  {t("common.balance")}: {formatRupiah(toWallet.balance)}
                 </p>
               )}
             </div>
           </div>
 
           {sameWallet && (
-            <p className="text-xs text-destructive">
-              Pilih dompet tujuan yang berbeda dari asal.
-            </p>
+            <p className="text-xs text-destructive">{t("transferDlg.sameWallet")}</p>
           )}
           {error && <p className="text-xs text-destructive">{error}</p>}
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Jumlah (Rp)</Label>
+            <Label htmlFor="amount">{t("common.amount")}</Label>
             <CurrencyInput
               id="amount"
               value={amount}
@@ -175,19 +172,17 @@ export function TransferDialog({
               autoFocus
             />
             {insufficient && (
-              <p className="text-xs text-amber-600">
-                ⚠ Saldo dompet asal tidak cukup, tapi masih bisa lanjut.
-              </p>
+              <p className="text-xs text-amber-600">{t("transferDlg.notEnough")}</p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="note">Catatan (opsional)</Label>
+            <Label htmlFor="note">{t("common.noteOptional")}</Label>
             <Input
               id="note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Misal: Top up dompet ojek"
+              placeholder={t("transferDlg.notePlaceholder")}
             />
           </div>
 
@@ -221,14 +216,14 @@ export function TransferDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Batal
+              {t("common.cancel")}
             </Button>
             <Button
               type="submit"
               disabled={!num || !fromId || !toId || !!sameWallet}
             >
               <ArrowRight className="h-3.5 w-3.5 mr-1" />
-              {fromAI ? "Konfirmasi Transfer" : "Lakukan Transfer"}
+              {fromAI ? t("transferDlg.submit.ai") : t("transferDlg.submit")}
             </Button>
           </DialogFooter>
         </form>

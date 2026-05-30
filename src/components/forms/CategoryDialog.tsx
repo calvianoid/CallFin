@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Category, CategoryType } from "@/types";
 import { CATEGORY_COLOR_OPTIONS } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 
 interface CategoryDialogProps {
@@ -23,6 +24,7 @@ const COMMON_EMOJIS = ["📌", "💼", "🏠", "🚗", "🍔", "🎬", "🛍️"
 
 export function CategoryDialog({ open, onOpenChange, initial, defaultType }: CategoryDialogProps) {
   const { categories, addCategory, updateCategory } = useStore();
+  const { t, locale } = useTranslation();
   const isEdit = !!initial;
 
   const [name, setName] = useState(initial?.name || "");
@@ -51,7 +53,12 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
       (c) => c.name.toLowerCase() === trimmed.toLowerCase() && c.type === type && c.id !== initial?.id
     );
     if (duplicate) {
-      setError(`Kategori "${trimmed}" sudah ada untuk tipe ${type === "income" ? "Pemasukan" : "Pengeluaran"}.`);
+      const typeLabel = type === "income" ? t("tx.tab.income") : t("tx.tab.expense");
+      setError(
+        locale === "en"
+          ? `Category "${trimmed}" already exists for type ${typeLabel}.`
+          : `Kategori "${trimmed}" sudah ada untuk tipe ${typeLabel}.`,
+      );
       return;
     }
 
@@ -67,10 +74,8 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit Kategori" : "Tambah Kategori"}</DialogTitle>
-          <DialogDescription>
-            Bikin kategori sendiri sesuai kebiasaan keuanganmu.
-          </DialogDescription>
+          <DialogTitle>{isEdit ? t("catDlg.title.edit") : t("catDlg.title.add")}</DialogTitle>
+          <DialogDescription>{t("catDlg.desc")}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -78,25 +83,25 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
           {!isEdit && (
             <Tabs value={type} onValueChange={(v) => setType(v as CategoryType)}>
               <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="expense">📉 Pengeluaran</TabsTrigger>
-                <TabsTrigger value="income">📈 Pemasukan</TabsTrigger>
+                <TabsTrigger value="expense">{t("txDlg.expense")}</TabsTrigger>
+                <TabsTrigger value="income">{t("txDlg.income")}</TabsTrigger>
               </TabsList>
             </Tabs>
           )}
 
           {isEdit && initial?.isInternal && (
             <div className="text-xs text-muted-foreground bg-muted rounded-md p-2">
-              Kategori internal — dipakai sistem untuk setoran goal. Tipe tidak bisa diubah.
+              {t("catDlg.internalWarn")}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nama Kategori</Label>
+            <Label htmlFor="name">{t("common.name")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => { setName(e.target.value); setError(null); }}
-              placeholder="Contoh: Olahraga, Skincare, Donasi"
+              placeholder={t("catDlg.namePlaceholder")}
               required
               autoFocus
               maxLength={24}
@@ -105,7 +110,7 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
           </div>
 
           <div className="space-y-2">
-            <Label>Icon</Label>
+            <Label>{t("common.icon")}</Label>
             <div className="flex flex-wrap gap-1.5">
               {COMMON_EMOJIS.map((e) => (
                 <button
@@ -124,7 +129,7 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
           </div>
 
           <div className="space-y-2">
-            <Label>Warna</Label>
+            <Label>{t("common.color")}</Label>
             <div className="flex flex-wrap gap-2">
               {CATEGORY_COLOR_OPTIONS.map((c) => (
                 <button
@@ -145,16 +150,16 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
 
           {/* Preview */}
           <div className="bg-muted rounded-lg p-3 flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Preview</span>
+            <span className="text-xs text-muted-foreground">{t("common.preview")}</span>
             <Badge variant="secondary" className={cn("text-xs gap-1", color)}>
               <span>{icon}</span>
-              <span>{name || "Nama Kategori"}</span>
+              <span>{name || t("common.name")}</span>
             </Badge>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Batal</Button>
-            <Button type="submit">{isEdit ? "Simpan" : "Tambah"}</Button>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+            <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

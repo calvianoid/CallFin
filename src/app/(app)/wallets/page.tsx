@@ -145,7 +145,7 @@ export default function WalletsPage() {
                       className="gap-1 h-8 text-primary hover:bg-primary/10"
                       onClick={() => setTransferDialog({ open: true, fromId: w.id })}
                       disabled={wallets.length < 2}
-                      title="Transfer dari dompet ini"
+                      title={t("wallets.transferFrom")}
                     >
                       <ArrowLeftRight className="h-3 w-3" />
                     </Button>

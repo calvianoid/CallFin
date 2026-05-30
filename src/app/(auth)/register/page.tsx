@@ -7,11 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, Loader2, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/context";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
-const steps = ["Akun", "Profil", "Budget Awal"];
+const STEP_KEYS: TranslationKey[] = ["register.step.account", "register.step.profile", "register.step.budget"];
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useTranslation();
+  const steps = STEP_KEYS.map((k) => t(k));
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -74,8 +78,8 @@ export default function RegisterPage() {
           </div>
         </div>
         <div>
-          <CardTitle className="text-2xl">Buat akun gratis</CardTitle>
-          <CardDescription>Mulai kendalikan keuanganmu hari ini</CardDescription>
+          <CardTitle className="text-2xl">{t("auth.createTitle")}</CardTitle>
+          <CardDescription>{t("auth.createSubtitle")}</CardDescription>
         </div>
 
         {/* Step indicator */}
@@ -108,48 +112,48 @@ export default function RegisterPage() {
           {step === 0 && (
             <>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
-                <Input type="email" placeholder="kamu@email.com" value={form.email} onChange={(e) => update("email", e.target.value)} required />
+                <label className="text-sm font-medium">{t("auth.email")}</label>
+                <Input type="email" placeholder={t("auth.emailPlaceholder")} value={form.email} onChange={(e) => update("email", e.target.value)} required />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Password</label>
-                <Input type="password" placeholder="Min. 8 karakter" value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={8} />
+                <label className="text-sm font-medium">{t("auth.password")}</label>
+                <Input type="password" placeholder={t("register.passwordPlaceholder")} value={form.password} onChange={(e) => update("password", e.target.value)} required minLength={8} />
               </div>
             </>
           )}
 
           {step === 1 && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">Nama Lengkap</label>
-              <Input placeholder="Nama kamu" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} required />
+              <label className="text-sm font-medium">{t("auth.fullName")}</label>
+              <Input placeholder={t("register.namePlaceholder")} value={form.full_name} onChange={(e) => update("full_name", e.target.value)} required />
             </div>
           )}
 
           {step === 2 && (
             <>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Perkiraan Pemasukan Bulanan (Rp)</label>
+                <label className="text-sm font-medium">{t("auth.monthlyIncome")}</label>
                 <Input type="number" placeholder="10000000" value={form.monthly_income} onChange={(e) => update("monthly_income", e.target.value)} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Target Keuangan Utama</label>
-                <Input placeholder="Contoh: Dana darurat 30 juta" value={form.primary_goal} onChange={(e) => update("primary_goal", e.target.value)} />
+                <label className="text-sm font-medium">{t("auth.primaryGoal")}</label>
+                <Input placeholder={t("register.goalPlaceholder")} value={form.primary_goal} onChange={(e) => update("primary_goal", e.target.value)} />
               </div>
             </>
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> :
-             step < steps.length - 1 ? "Lanjut" : "Mulai Sekarang!"}
+             step < steps.length - 1 ? t("auth.next") : t("auth.startNow")}
           </Button>
         </form>
       </CardContent>
 
       <CardFooter className="flex justify-center pt-0">
         <p className="text-sm text-muted-foreground">
-          Sudah punya akun?{" "}
+          {t("auth.haveAccount")}{" "}
           <Link href="/login" className="text-primary font-medium hover:underline">
-            Masuk
+            {t("auth.signIn")}
           </Link>
         </p>
       </CardFooter>

@@ -122,9 +122,9 @@ export default function SettingsPage() {
                     value={profile.email}
                     readOnly
                     className="bg-muted cursor-not-allowed"
-                    title="Email akun tidak bisa diubah di sini. Hubungi support."
+                    title={t("settings.emailLocked")}
                   />
-                  <p className="text-[10px] text-muted-foreground">Email akun adalah identitas login & tidak bisa diubah di sini.</p>
+                  <p className="text-[10px] text-muted-foreground">{t("settings.emailLocked")}</p>
                 </div>
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t("settings.phone")}</Label>
