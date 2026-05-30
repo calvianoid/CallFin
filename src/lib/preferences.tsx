@@ -8,7 +8,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
  * Financial Freedom menu. Mirrors the LocaleProvider pattern.
  */
 interface PreferencesContextValue {
-  /** Show the Financial Freedom menu item in the sidebar. */
+  /** Show the Financial Freedom menu item in the sidebar. Off by default — opt-in via Settings. */
   showFreedom: boolean;
   setShowFreedom: (v: boolean) => void;
   /** True once localStorage has been read (avoids hydration flash). */
@@ -20,7 +20,7 @@ const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 const KEY_FREEDOM = "callfin.showFreedom";
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [showFreedom, setShowFreedomState] = useState(true); // default: shown
+  const [showFreedom, setShowFreedomState] = useState(false); // default: hidden (opt-in)
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
