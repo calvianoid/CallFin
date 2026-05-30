@@ -13,13 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { useStore } from "@/lib/store";
 import { formatRupiah } from "@/lib/mock-data";
 import { ArrowRight, Sparkles, ArrowLeftRight } from "lucide-react";
@@ -115,27 +109,15 @@ export function TransferDialog({
           <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-end">
             <div className="space-y-2">
               <Label>Dari</Label>
-              <Select value={fromId} onValueChange={(v) => v && setFromId(v)}>
-                <SelectTrigger>
-                  {(() => {
-                    const w = wallets.find((w) => w.id === fromId);
-                    return w ? (
-                      <span>
-                        {w.icon} {w.name}
-                      </span>
-                    ) : (
-                      <SelectValue />
-                    );
-                  })()}
-                </SelectTrigger>
-                <SelectContent>
-                  {wallets.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>
-                      <span className="mr-1">{w.icon}</span> {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={fromId}
+                onValueChange={setFromId}
+                items={wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
+                placeholder="Pilih dompet"
+                searchPlaceholder="Cari dompet..."
+                emptyMessage="Tidak ada dompet."
+                triggerClassName="w-full"
+              />
               {fromWallet && (
                 <p className="text-[10px] text-muted-foreground tabular-nums">
                   Saldo: {formatRupiah(fromWallet.balance)}
@@ -156,36 +138,17 @@ export function TransferDialog({
 
             <div className="space-y-2">
               <Label>Ke</Label>
-              <Select value={toId} onValueChange={(v) => v && setToId(v)}>
-                <SelectTrigger>
-                  {(() => {
-                    const w = wallets.find((w) => w.id === toId);
-                    return w ? (
-                      <span>
-                        {w.icon} {w.name}
-                      </span>
-                    ) : (
-                      <SelectValue />
-                    );
-                  })()}
-                </SelectTrigger>
-                <SelectContent>
-                  {wallets.map((w) => (
-                    <SelectItem
-                      key={w.id}
-                      value={w.id}
-                      disabled={w.id === fromId}
-                    >
-                      <span className="mr-1">{w.icon}</span> {w.name}
-                      {w.id === fromId && (
-                        <span className="text-[10px] ml-1 text-muted-foreground">
-                          (asal)
-                        </span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                value={toId}
+                onValueChange={setToId}
+                items={wallets
+                  .filter((w) => w.id !== fromId)
+                  .map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
+                placeholder="Pilih dompet"
+                searchPlaceholder="Cari dompet..."
+                emptyMessage="Tidak ada dompet lain."
+                triggerClassName="w-full"
+              />
               {toWallet && (
                 <p className="text-[10px] text-muted-foreground tabular-nums">
                   Saldo: {formatRupiah(toWallet.balance)}

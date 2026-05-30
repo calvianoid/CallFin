@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/types";
 import { useStore } from "@/lib/store";
@@ -151,51 +152,28 @@ export function TransactionDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Kategori</Label>
-              <Select
+              <Combobox
                 value={category}
-                onValueChange={(v) => v && setCategory(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih kategori" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableCategories.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
-                      <span className="mr-1">{c.icon}</span> {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={setCategory}
+                items={availableCategories.map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
+                placeholder="Pilih kategori"
+                searchPlaceholder="Cari kategori..."
+                emptyMessage="Tidak ada kategori."
+                triggerClassName="w-full"
+              />
             </div>
 
             <div className="space-y-2">
               <Label>Dompet</Label>
-              <Select
+              <Combobox
                 value={walletId}
-                onValueChange={(v) => v && setWalletId(v)}
-              >
-                <SelectTrigger>
-                  {(() => {
-                    const w = wallets.find((w) => w.id === walletId);
-                    return w ? (
-                      <span>
-                        {w.icon ? <span className="mr-1">{w.icon}</span> : null}
-                        {w.name}
-                      </span>
-                    ) : (
-                      <SelectValue placeholder="Pilih dompet" />
-                    );
-                  })()}
-                </SelectTrigger>
-                <SelectContent>
-                  {wallets.map((w) => (
-                    <SelectItem key={w.id} value={w.id}>
-                      {w.icon ? <span className="mr-1">{w.icon}</span> : null}{" "}
-                      {w.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onValueChange={setWalletId}
+                items={wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon }))}
+                placeholder="Pilih dompet"
+                searchPlaceholder="Cari dompet..."
+                emptyMessage="Tidak ada dompet."
+                triggerClassName="w-full"
+              />
             </div>
           </div>
 

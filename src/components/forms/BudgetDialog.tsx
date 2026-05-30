@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Budget } from "@/types";
 import { useStore } from "@/lib/store";
 import { AlertCircle } from "lucide-react";
@@ -113,33 +114,18 @@ export function BudgetDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Kategori</Label>
-            <Select
+            <Combobox
               value={category}
-              onValueChange={(v) => v && setCategory(v)}
+              onValueChange={setCategory}
+              items={expenseCategories
+                .filter((c) => !usedCategories.has(c.name))
+                .map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
+              placeholder="Pilih kategori"
+              searchPlaceholder="Cari kategori..."
+              emptyMessage="Tidak ada kategori tersisa."
               disabled={isEdit || allUsed}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih kategori" />
-              </SelectTrigger>
-              <SelectContent>
-                {expenseCategories.map((c) => {
-                  const used = usedCategories.has(c.name);
-                  return (
-                    <SelectItem key={c.id} value={c.name} disabled={used}>
-                      <span className="flex items-center gap-2">
-                        <span>{c.icon}</span>
-                        <span>{c.name}</span>
-                        {used && (
-                          <span className="text-[10px] text-muted-foreground">
-                            (sudah ada)
-                          </span>
-                        )}
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              triggerClassName="w-full"
+            />
             {isEdit && (
               <p className="text-xs text-muted-foreground">
                 Kategori tidak bisa diubah saat edit.

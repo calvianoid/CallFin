@@ -14,16 +14,17 @@ import { Plus, AlertTriangle, CheckCircle2, TrendingDown, Pencil, Trash2 } from 
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 import { formatMonthLabel } from "@/components/ui/month-picker";
+import { computeBudgetSpent } from "@/lib/budget-utils";
 
 export default function BudgetsPage() {
-  const { budgets, deleteBudget, isHydrating } = useStore();
+  const { budgets, deleteBudget, isHydrating, transactions } = useStore();
   const { t } = useTranslation();
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | undefined>();
 
   const totalBudget = budgets.reduce((s, b) => s + b.limit_amount, 0);
-  const totalSpent = budgets.reduce((s, b) => s + (b.spent || 0), 0);
+  const totalSpent = budgets.reduce((s, b) => s + computeBudgetSpent(b, transactions), 0);
   const overallPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   function openAdd() {
@@ -88,7 +89,8 @@ export default function BudgetsPage() {
             </Card>
           ))
         ) : budgets.map((b) => {
-          const pct = Math.min(((b.spent || 0) / b.limit_amount) * 100, 100);
+          const spent = computeBudgetSpent(b, transactions);
+          const pct = Math.min((spent / b.limit_amount) * 100, 100);
           const isDanger = pct >= 95;
           const isWarning = pct >= 80 && pct < 95;
           const isGood = pct < 60;
@@ -136,11 +138,11 @@ export default function BudgetsPage() {
                 />
 
                 <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-                  <span>{t("budget.spent")}: {formatRupiah(b.spent || 0)}</span>
+                  <span>{t("budget.spent")}: {formatRupiah(spent)}</span>
                   <span>{t("budget.limit")}: {formatRupiah(b.limit_amount)}</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("budget.remaining")}: {formatRupiah(b.limit_amount - (b.spent || 0))}
+                  {t("budget.remaining")}: {formatRupiah(b.limit_amount - (spent))}
                 </p>
               </CardContent>
             </Card>

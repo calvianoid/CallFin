@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionDialog } from "@/components/forms/TransactionDialog";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
@@ -94,15 +94,18 @@ export default function TransactionsPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Select value={walletFilter} onValueChange={(v) => setWalletFilter(v || "all")}>
-          <SelectTrigger className="w-[160px]"><SelectValue placeholder={t("tx.allWallets")} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("tx.allWallets")}</SelectItem>
-            {wallets.map((w) => (
-              <SelectItem key={w.id} value={w.id}>{w.icon} {w.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          value={walletFilter}
+          onValueChange={(v) => setWalletFilter(v || "all")}
+          items={[
+            { value: "all", label: t("tx.allWallets") } as ComboboxItem,
+            ...wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon })),
+          ]}
+          placeholder={t("tx.allWallets")}
+          searchPlaceholder="Cari dompet..."
+          emptyMessage="Tidak ada dompet."
+          triggerClassName="w-[180px]"
+        />
         <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
           <TabsList>
             <TabsTrigger value="all">{t("tx.tab.all")}</TabsTrigger>

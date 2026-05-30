@@ -7,13 +7,14 @@ import { Budget } from "@/types";
 import { formatRupiah } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/lib/store";
+import { computeBudgetSpent } from "@/lib/budget-utils";
 
 interface BudgetOverviewProps {
   budgets: Budget[];
 }
 
 export function BudgetOverview({ budgets }: BudgetOverviewProps) {
-  const { isHydrating } = useStore();
+  const { isHydrating, transactions } = useStore();
 
   if (isHydrating && budgets.length === 0) {
     return (
@@ -43,7 +44,10 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {budgets.map((b) => {
-          const pct = Math.min(((b.spent || 0) / b.limit_amount) * 100, 100);
+          // Always compute spent from current transactions so the bar reacts
+          // immediately when budgets are added or transactions change.
+          const spent = computeBudgetSpent(b, transactions);
+          const pct = Math.min((spent / b.limit_amount) * 100, 100);
           const isWarning = pct >= 80;
           const isDanger = pct >= 95;
 
@@ -55,7 +59,7 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
                   "font-medium",
                   isDanger ? "text-red-500" : isWarning ? "text-amber-500" : "text-muted-foreground"
                 )}>
-                  {formatRupiah(b.spent || 0)} / {formatRupiah(b.limit_amount)}
+                  {formatRupiah(spent)} / {formatRupiah(b.limit_amount)}
                 </span>
               </div>
               <Progress

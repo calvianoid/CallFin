@@ -13,13 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { useStore } from "@/lib/store";
 import { formatRupiah } from "@/lib/mock-data";
 import { PiggyBank, Sparkles } from "lucide-react";
@@ -101,29 +95,19 @@ export function GoalContributionDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label>Goal Tujuan</Label>
-            <Select
+            <Combobox
               value={selectedGoalId}
-              onValueChange={(v) => v && setSelectedGoalId(v)}
+              onValueChange={setSelectedGoalId}
+              items={goals.map<ComboboxItem>((g) => {
+                const pct = ((g.current_amount / g.target_amount) * 100).toFixed(0);
+                return { value: g.id, label: g.goal_name, icon: "🎯", hint: `(${pct}%)` };
+              })}
+              placeholder="Pilih goal"
+              searchPlaceholder="Cari goal..."
+              emptyMessage="Belum ada goal."
               disabled={!!goalId && goals.some((g) => g.id === goalId)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih goal" />
-              </SelectTrigger>
-              <SelectContent>
-                {goals.map((g) => {
-                  const pct = (
-                    (g.current_amount / g.target_amount) *
-                    100
-                  ).toFixed(0);
-                  return (
-                    <SelectItem key={g.id} value={g.id}>
-                      🎯 {g.goal_name}{" "}
-                      <span className="text-muted-foreground">({pct}%)</span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+              triggerClassName="w-full"
+            />
           </div>
 
           {goal && (
@@ -163,30 +147,20 @@ export function GoalContributionDialog({
 
           <div className="space-y-2">
             <Label>Ambil dari Dompet</Label>
-            <Select value={walletId} onValueChange={(v) => v && setWalletId(v)}>
-              <SelectTrigger>
-                {(() => {
-                  const w = wallets.find((w) => w.id === walletId);
-                  return w ? (
-                    <span>
-                      {w.icon} {w.name}
-                    </span>
-                  ) : (
-                    <SelectValue />
-                  );
-                })()}
-              </SelectTrigger>
-              <SelectContent>
-                {wallets.map((w) => (
-                  <SelectItem key={w.id} value={w.id}>
-                    <span className="mr-1">{w.icon}</span> {w.name}
-                    <span className="text-muted-foreground ml-1">
-                      ({formatRupiah(w.balance)})
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              value={walletId}
+              onValueChange={setWalletId}
+              items={wallets.map<ComboboxItem>((w) => ({
+                value: w.id,
+                label: w.name,
+                icon: w.icon,
+                hint: formatRupiah(w.balance),
+              }))}
+              placeholder="Pilih dompet"
+              searchPlaceholder="Cari dompet..."
+              emptyMessage="Tidak ada dompet."
+              triggerClassName="w-full"
+            />
             {insufficient && (
               <p className="text-xs text-amber-600">
                 ⚠ Saldo dompet tidak cukup, tapi masih bisa lanjut.
