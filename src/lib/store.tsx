@@ -79,7 +79,7 @@ interface StoreContextValue {
     patch: Partial<Omit<Category, "id" | "user_id">>,
   ) => void;
   deleteCategory: (id: string) => void;
-  updateProfile: (patch: Partial<UserProfile>) => void;
+  updateProfile: (patch: Partial<UserProfile>) => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -195,12 +195,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const updateProfileLocal = useCallback((patch: Partial<UserProfile>) => {
+  const updateProfileLocal = useCallback(async (patch: Partial<UserProfile>) => {
     setProfile((prev) => (prev ? { ...prev, ...patch } : prev));
     if (SUPABASE_READY) {
-      import("./api/profile")
-        .then((m) => m.updateProfile(patch as never))
-        .catch((err) => console.error("[store] updateProfile failed:", err));
+      const m = await import("./api/profile");
+      await m.updateProfile(patch as never); // throws on failure so caller can show feedback
     }
   }, []);
 

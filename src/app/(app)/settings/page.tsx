@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, User, Bell, Shield, LogOut, Sun, Moon, Monitor, Languages } from "lucide-react";
+import { Trash2, User, Bell, Shield, LogOut, Sun, Moon, Monitor, Languages, Loader2, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useTranslation } from "@/lib/i18n/context";
@@ -45,13 +45,23 @@ export default function SettingsPage() {
     }
   }, [storeProfile]);
 
-  function handleSaveProfile() {
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  async function handleSaveProfile() {
     // Email is intentionally NOT in this payload — changing the auth email is a
     // separate, verification-gated flow (see Supabase sb.auth.updateUser({email})).
-    updateProfile({
-      full_name: profile.fullName,
-      phone: profile.phone || null,
-    });
+    setSaveState("saving");
+    try {
+      await updateProfile({
+        full_name: profile.fullName,
+        phone: profile.phone || null,
+      });
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2500);
+    } catch {
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 4000);
+    }
   }
 
   const [prefs, setPrefs] = useState({
@@ -134,8 +144,22 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end">
-                <Button size="sm" onClick={handleSaveProfile}>{t("settings.saveChanges")}</Button>
+              <div className="flex items-center justify-end gap-3">
+                {saveState === "saved" && (
+                  <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                    <Check className="h-3.5 w-3.5" /> {t("settings.saved")}
+                  </span>
+                )}
+                {saveState === "error" && (
+                  <span className="text-xs text-destructive">{t("settings.saveError")}</span>
+                )}
+                <Button size="sm" onClick={handleSaveProfile} disabled={saveState === "saving"}>
+                  {saveState === "saving" ? (
+                    <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> {t("settings.saving")}</>
+                  ) : (
+                    t("settings.saveChanges")
+                  )}
+                </Button>
               </div>
             </CardContent>
           </Card>
