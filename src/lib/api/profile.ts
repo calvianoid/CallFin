@@ -15,8 +15,8 @@ export async function getProfile() {
 
 export async function updateProfile(patch: {
   full_name?: string;
-  phone?: string;
-  avatar_url?: string;
+  phone?: string | null;
+  avatar_url?: string | null;
   locale?: "id" | "en";
   theme?: "light" | "dark" | "system";
   /** Ignored — auth email change has its own verification flow via sb.auth.updateUser(). */

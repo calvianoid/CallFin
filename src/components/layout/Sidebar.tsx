@@ -17,7 +17,7 @@ import {
   Upload,
   Rocket,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/lib/i18n/context";
@@ -128,6 +128,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           ) : (
             <>
               <Avatar className="h-8 w-8">
+                {profile?.avatar_url && <AvatarImage src={profile.avatar_url} alt={displayName} />}
                 <AvatarFallback className="bg-primary/20 text-primary text-xs font-bold">{initials || "?"}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">

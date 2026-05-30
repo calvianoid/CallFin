@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, User, Bell, Shield, LogOut, Sun, Moon, Monitor, Languages, Loader2, Check } from "lucide-react";
@@ -17,6 +17,8 @@ import { useTranslation } from "@/lib/i18n/context";
 import { LOCALE_LABELS, Locale } from "@/lib/i18n/translations";
 import { useStore } from "@/lib/store";
 import { usePreferences } from "@/lib/preferences";
+import { getSupabaseBrowser } from "@/lib/supabase/browser-client";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -46,6 +48,60 @@ export default function SettingsPage() {
   }, [storeProfile]);
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photoState, setPhotoState] = useState<"idle" | "uploading" | "error">("idle");
+  const [photoError, setPhotoError] = useState("");
+
+  async function handlePhotoSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setPhotoError(t("settings.photoInvalid"));
+      setPhotoState("error");
+      setTimeout(() => setPhotoState("idle"), 4000);
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoError(t("settings.photoTooBig"));
+      setPhotoState("error");
+      setTimeout(() => setPhotoState("idle"), 4000);
+      return;
+    }
+
+    setPhotoState("uploading");
+    try {
+      const sb = getSupabaseBrowser();
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${user.id}/avatar_${Date.now()}.${ext}`;
+      const { error: upErr } = await sb.storage.from("avatars").upload(path, file, {
+        upsert: true,
+        cacheControl: "3600",
+      });
+      if (upErr) throw upErr;
+
+      const { data: { publicUrl } } = sb.storage.from("avatars").getPublicUrl(path);
+      await updateProfile({ avatar_url: publicUrl });
+      setPhotoState("idle");
+    } catch (err) {
+      console.error("[settings] avatar upload failed:", err);
+      setPhotoError(t("settings.photoError"));
+      setPhotoState("error");
+      setTimeout(() => setPhotoState("idle"), 4000);
+    }
+  }
+
+  async function handleRemovePhoto() {
+    try {
+      await updateProfile({ avatar_url: null });
+    } catch (err) {
+      console.error("[settings] avatar remove failed:", err);
+    }
+  }
 
   async function handleSaveProfile() {
     // Email is intentionally NOT in this payload — changing the auth email is a
@@ -110,6 +166,9 @@ export default function SettingsPage() {
               ) : (
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
+                    {storeProfile?.avatar_url && (
+                      <AvatarImage src={storeProfile.avatar_url} alt={profile.fullName} />
+                    )}
                     <AvatarFallback className="bg-primary/20 text-primary font-bold text-lg">
                       {profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                     </AvatarFallback>
@@ -117,7 +176,41 @@ export default function SettingsPage() {
                   <div>
                     <p className="font-semibold">{profile.fullName}</p>
                     <p className="text-sm text-muted-foreground">{profile.email}</p>
-                    <Button variant="outline" size="sm" className="mt-2 h-7 text-xs">{t("settings.changePhoto")}</Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handlePhotoSelect}
+                    />
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs"
+                        disabled={photoState === "uploading" || !isSupabaseConfigured()}
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        {photoState === "uploading" ? (
+                          <><Loader2 className="h-3 w-3 mr-1.5 animate-spin" /> {t("settings.uploadingPhoto")}</>
+                        ) : (
+                          t("settings.changePhoto")
+                        )}
+                      </Button>
+                      {storeProfile?.avatar_url && photoState !== "uploading" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                          onClick={handleRemovePhoto}
+                        >
+                          {t("settings.removePhoto")}
+                        </Button>
+                      )}
+                    </div>
+                    {photoState === "error" && (
+                      <p className="text-[11px] text-destructive mt-1">{photoError}</p>
+                    )}
                   </div>
                 </div>
               )}
