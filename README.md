@@ -25,6 +25,23 @@ Cocok untuk siapa saja yang ingin melacak pemasukan/pengeluaran lintas dompet
 (tunai, bank, e-wallet, kartu kredit), mengatur budget bulanan, dan menabung ke
 target finansial — tanpa ribet.
 
+## 🧠 Filosofi Nama
+
+> **CallFin = _Call_ + _Fin_**
+
+- **_Call_** 📞 — karena cara pakainya seperti **memanggil** seorang teman lalu
+  ngobrol. Tidak ada form yang bikin pusing; kamu cukup "memanggil" asistenmu
+  dan bilang _"tadi jajan 20 ribu"_. Mengelola uang harusnya semudah mengirim
+  satu pesan.
+- **_Fin_** 💰 — dari **Fin**ance / **Fin**ansial. Singkat, ramah, dan terdengar
+  seperti nama panggilan — biar urusan duit terasa kayak ngobrol sama kawan,
+  bukan ngadep akuntan.
+
+Filosofinya sederhana: **keuangan yang baik dimulai dari kebiasaan yang ringan.**
+Semakin gampang mencatat, semakin sering kamu melakukannya — dan semakin jelas
+ke mana perginya uangmu. Jadi alih-alih aplikasi yang menuntut disiplin tinggi,
+CallFin cuma minta kamu... _ngobrol_. 😄
+
 ## 🚀 Fitur Utama
 
 | Fitur | Penjelasan |
