@@ -48,6 +48,8 @@ interface StoreContextValue {
   updateWallet: (id: string, patch: Partial<Wallet>) => void;
   deleteWallet: (id: string) => void;
   addTransaction: (t: Omit<Transaction, "id" | "user_id">) => Transaction;
+  /** Edit a plain income/expense transaction (not transfer/goal). Returns the updated tx. */
+  updateTransaction: (id: string, patch: Partial<Omit<Transaction, "id" | "user_id">>) => void;
   deleteTransaction: (id: string) => void;
   addBudget: (b: Omit<Budget, "id" | "user_id">) => void;
   updateBudget: (id: string, patch: Partial<Budget>) => void;
@@ -412,6 +414,87 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateTransaction = useCallback(
+    (id: string, patch: Partial<Omit<Transaction, "id" | "user_id">>) => {
+      const old = transactionsRef.current.find((t) => t.id === id);
+      if (!old) return;
+
+      // Only allow editing plain income/expense — transfer & goal contribution
+      // have their own dialogs and the SQL trigger reversal is messier there.
+      if (old.type === "transfer" || old.transfer_to_wallet_id || old.goal_id) {
+        console.warn("[store] updateTransaction skipped: transfer/goal not editable");
+        return;
+      }
+
+      const next: Transaction = {
+        ...old,
+        ...patch,
+        id: old.id,
+        user_id: old.user_id,
+      };
+
+      // 1. Replace the tx in the list.
+      setTransactions((prev) => prev.map((t) => (t.id === id ? next : t)));
+
+      // 2. Reverse the OLD wallet effect, then apply the NEW wallet effect.
+      const oldDelta = old.type === "income" ? -old.amount : old.amount; // amount to ADD back
+      const newDelta = next.type === "income" ? next.amount : -next.amount; // amount to APPLY
+      setWallets((ws) =>
+        ws.map((w) => {
+          let bal = w.balance;
+          if (w.id === old.wallet_id) bal += oldDelta;
+          if (w.id === next.wallet_id) bal += newDelta;
+          return bal === w.balance ? w : { ...w, balance: bal };
+        }),
+      );
+
+      // 3. Reverse old budget impact, apply new budget impact.
+      if (old.type === "expense") {
+        setBudgets((bs) =>
+          bs.map((b) =>
+            b.category === old.category
+              ? { ...b, spent: Math.max((b.spent || 0) - old.amount, 0) }
+              : b,
+          ),
+        );
+      }
+      if (next.type === "expense") {
+        setBudgets((bs) =>
+          bs.map((b) =>
+            b.category === next.category
+              ? { ...b, spent: (b.spent || 0) + next.amount }
+              : b,
+          ),
+        );
+      }
+
+      // 4. Persist to Supabase (delete + insert, since trigger has no UPDATE path).
+      if (SUPABASE_READY) {
+        import("./api/transactions")
+          .then((m) =>
+            m.updateTransaction(id, {
+              wallet_id: next.wallet_id,
+              type: next.type as "income" | "expense",
+              amount: next.amount,
+              category: next.category,
+              description: next.description,
+              date: next.date,
+            }),
+          )
+          .then((updated) => {
+            // Replace the tx again with the canonical server row (new id).
+            setTransactions((prev) =>
+              prev.map((t) => (t.id === id ? updated : t)),
+            );
+          })
+          .catch((err) =>
+            console.error("[store] updateTransaction failed:", err),
+          );
+      }
+    },
+    [],
+  );
+
   // We need the latest transactions to look up the tx being deleted without
   // putting the lookup inside a setState updater (React StrictMode would call
   // the updater twice in dev, double-firing every side effect inside).
@@ -631,6 +714,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         updateWallet,
         deleteWallet,
         addTransaction,
+        updateTransaction,
         deleteTransaction,
         addBudget,
         updateBudget,

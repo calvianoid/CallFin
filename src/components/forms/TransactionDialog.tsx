@@ -41,7 +41,8 @@ export function TransactionDialog({
   fromAI,
   onSaved,
 }: TransactionDialogProps) {
-  const { wallets, categories, addTransaction } = useStore();
+  const { wallets, categories, addTransaction, updateTransaction } = useStore();
+  const isEdit = !!initial?.id;
 
   const [type, setType] = useState<TransactionType>(initial?.type || "expense");
   const [amount, setAmount] = useState<string>(
@@ -98,6 +99,19 @@ export function TransactionDialog({
     const numAmount = parseFloat(amount);
     if (!numAmount || !walletId) return;
 
+    if (isEdit && initial?.id) {
+      updateTransaction(initial.id, {
+        type,
+        amount: numAmount,
+        category,
+        description: description || category,
+        date,
+        wallet_id: walletId,
+      });
+      onOpenChange(false);
+      return;
+    }
+
     const tx = addTransaction({
       type,
       amount: numAmount,
@@ -117,12 +131,18 @@ export function TransactionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI && <Sparkles className="h-4 w-4 text-primary" />}
-            {fromAI ? "Konfirmasi Transaksi dari AI" : "Tambah Transaksi"}
+            {fromAI
+              ? "Konfirmasi Transaksi dari AI"
+              : isEdit
+                ? "Edit Transaksi"
+                : "Tambah Transaksi"}
           </DialogTitle>
           <DialogDescription>
             {fromAI
               ? "AI berhasil membaca transaksimu. Cek dan ubah jika perlu, lalu konfirmasi."
-              : "Catat pemasukan atau pengeluaranmu secara manual."}
+              : isEdit
+                ? "Ubah detail transaksi. Saldo dompet & budget akan disesuaikan otomatis."
+                : "Catat pemasukan atau pengeluaranmu secara manual."}
           </DialogDescription>
         </DialogHeader>
 
@@ -206,7 +226,11 @@ export function TransactionDialog({
               Batal
             </Button>
             <Button type="submit">
-              {fromAI ? "Konfirmasi & Simpan" : "Simpan"}
+              {fromAI
+                ? "Konfirmasi & Simpan"
+                : isEdit
+                  ? "Simpan Perubahan"
+                  : "Simpan"}
             </Button>
           </DialogFooter>
         </form>

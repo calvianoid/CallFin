@@ -13,7 +13,8 @@ import { TransactionDialog } from "@/components/forms/TransactionDialog";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
 import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
-import { Search, TrendingUp, TrendingDown, Plus, Trash2, PiggyBank, ArrowLeftRight } from "lucide-react";
+import { Transaction } from "@/types";
+import { Search, TrendingUp, TrendingDown, Plus, Trash2, PiggyBank, ArrowLeftRight, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id, enUS } from "date-fns/locale";
@@ -27,6 +28,7 @@ export default function TransactionsPage() {
   const [filter, setFilter] = useState<"all" | "income" | "expense" | "transfer">("all");
   const [walletFilter, setWalletFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   // First narrow by selected month, then apply other filters
@@ -129,7 +131,7 @@ export default function TransactionsPage() {
                 <TableHead>{t("tx.col.wallet")}</TableHead>
                 <TableHead>{t("tx.col.date")}</TableHead>
                 <TableHead className="text-right">{t("tx.col.amount")}</TableHead>
-                <TableHead className="w-10"></TableHead>
+                <TableHead className="w-20"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,7 +148,7 @@ export default function TransactionsPage() {
                       <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                       <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                       <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
-                      <TableCell><Skeleton className="h-7 w-7" /></TableCell>
+                      <TableCell><Skeleton className="h-7 w-16" /></TableCell>
                     </TableRow>
                   ))
                 : filtered.map((tx) => {
@@ -203,10 +205,28 @@ export default function TransactionsPage() {
                       {tx.type === "income" ? "+" : tx.type === "transfer" ? "" : "-"}{formatRupiah(tx.amount)}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => deleteTransaction(tx.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-0.5 justify-end">
+                        {tx.type !== "transfer" && !tx.goal_id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            onClick={() => setEditTx(tx)}
+                            title="Edit"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          onClick={() => deleteTransaction(tx.id)}
+                          title="Hapus"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -222,6 +242,11 @@ export default function TransactionsPage() {
       </Card>
 
       <TransactionDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <TransactionDialog
+        open={!!editTx}
+        onOpenChange={(o) => !o && setEditTx(null)}
+        initial={editTx ?? undefined}
+      />
     </div>
   );
 }
