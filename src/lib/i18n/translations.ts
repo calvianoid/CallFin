@@ -263,6 +263,10 @@ export const TRANSLATIONS = {
     "chat.label.expense": "📉 Pengeluaran",
     "chat.label.income": "📈 Pemasukan",
 
+    // Document / browser tab
+    "meta.title": "CallFin — Asisten Keuangan AI",
+    "meta.description": "Catat, lacak, dan perbaiki kondisi finansialmu dengan bantuan AI.",
+
     // Transaction Dialog
     "txDlg.title.add": "Tambah Transaksi",
     "txDlg.title.edit": "Edit Transaksi",
@@ -661,6 +665,10 @@ export const TRANSLATIONS = {
 
     "chat.label.expense": "📉 Expense",
     "chat.label.income": "📈 Income",
+
+    // Document / browser tab
+    "meta.title": "CallFin — AI Finance Assistant",
+    "meta.description": "Record, track, and improve your finances with AI.",
 
     // Transaction Dialog
     "txDlg.title.add": "Add Transaction",

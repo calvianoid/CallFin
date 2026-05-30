@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/lib/i18n/context";
 import { DemoModeBanner } from "@/components/layout/DemoModeBanner";
+import { DocumentTitle } from "@/components/layout/DocumentTitle";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -19,9 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// Static default shown during SSR / before the client locale loads (and what
+// search engines + link previews see). DocumentTitle swaps it to the user's
+// chosen language on the client.
 export const metadata: Metadata = {
-  title: "CallFin — Asisten Keuangan AI",
-  description: "Catat, lacak, dan perbaiki kondisi finansialmu dengan bantuan AI.",
+  title: "CallFin — AI Finance Assistant",
+  description: "Record, track, and improve your finances with AI.",
 };
 
 export default function RootLayout({
@@ -38,6 +42,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <ThemeProvider>
           <LocaleProvider>
+            <DocumentTitle />
             <DemoModeBanner />
             {children}
           </LocaleProvider>
