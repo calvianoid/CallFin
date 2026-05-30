@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
 import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
@@ -27,7 +28,7 @@ const CHART_COLORS = [
 ];
 
 export default function ReportsPage() {
-  const { transactions, budgets, goals, wallets } = useStore();
+  const { transactions, budgets, goals, wallets, isHydrating } = useStore();
   const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
 
   // ──────────────────────────────────────────────────────────────────────────
@@ -290,6 +291,63 @@ export default function ReportsPage() {
   }
 
   const todayLabel = new Intl.DateTimeFormat("id-ID", { dateStyle: "long" }).format(new Date());
+
+  // Skeleton while hydrating from Supabase
+  if (isHydrating && transactions.length === 0) {
+    return (
+      <div className="p-4 sm:p-6 max-w-5xl space-y-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="h-8 w-24" />
+        </div>
+        <Skeleton className="h-9 w-40" />
+        {/* KPI row */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[0, 1, 2, 3].map((i) => (
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-3 space-y-1.5">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-2.5 w-16" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {/* Summary */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[0, 1, 2].map((i) => (
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-4 space-y-2">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-6 w-32" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {/* Two-column chart row */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {[0, 1].map((i) => (
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-4">
+                <Skeleton className="h-4 w-32 mb-3" />
+                <Skeleton className="h-48 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        {/* Daily chart */}
+        <Card className="border-border/50">
+          <CardContent className="p-4">
+            <Skeleton className="h-4 w-40 mb-3" />
+            <Skeleton className="h-48 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6 max-w-5xl space-y-5">

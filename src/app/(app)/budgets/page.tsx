@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { BudgetDialog } from "@/components/forms/BudgetDialog";
 import { formatRupiah } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
@@ -15,7 +16,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { formatMonthLabel } from "@/components/ui/month-picker";
 
 export default function BudgetsPage() {
-  const { budgets, deleteBudget } = useStore();
+  const { budgets, deleteBudget, isHydrating } = useStore();
   const { t } = useTranslation();
   const currentMonth = new Date().toISOString().slice(0, 7);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -70,7 +71,23 @@ export default function BudgetsPage() {
       </Card>
 
       <div className="grid gap-3">
-        {budgets.map((b) => {
+        {isHydrating && budgets.length === 0 ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-12" />
+                </div>
+                <Skeleton className="h-2 w-full rounded-full" />
+                <div className="flex justify-between">
+                  <Skeleton className="h-2.5 w-40" />
+                  <Skeleton className="h-2.5 w-40" />
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : budgets.map((b) => {
           const pct = Math.min(((b.spent || 0) / b.limit_amount) * 100, 100);
           const isDanger = pct >= 95;
           const isWarning = pct >= 80 && pct < 95;

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2, User, Bell, Shield, LogOut, Sun, Moon, Monitor, Languages } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ import { useStore } from "@/lib/store";
 export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { t, locale, setLocale } = useTranslation();
-  const { profile: storeProfile, updateProfile } = useStore();
+  const { profile: storeProfile, updateProfile, isHydrating } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -85,18 +86,29 @@ export default function SettingsPage() {
               <CardDescription>{t("settings.personalInfoDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-16 w-16">
-                  <AvatarFallback className="bg-primary/20 text-primary font-bold text-lg">
-                    {profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{profile.fullName}</p>
-                  <p className="text-sm text-muted-foreground">{profile.email}</p>
-                  <Button variant="outline" size="sm" className="mt-2 h-7 text-xs">{t("settings.changePhoto")}</Button>
+              {isHydrating && !storeProfile ? (
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-16 w-16 rounded-full shrink-0" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                    <Skeleton className="h-7 w-24" />
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarFallback className="bg-primary/20 text-primary font-bold text-lg">
+                      {profile.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{profile.fullName}</p>
+                    <p className="text-sm text-muted-foreground">{profile.email}</p>
+                    <Button variant="outline" size="sm" className="mt-2 h-7 text-xs">{t("settings.changePhoto")}</Button>
+                  </div>
+                </div>
+              )}
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2">

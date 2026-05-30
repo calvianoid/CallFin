@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { WalletDialog } from "@/components/forms/WalletDialog";
 import { useStore } from "@/lib/store";
@@ -14,7 +15,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { TransferDialog } from "@/components/forms/TransferDialog";
 
 export default function WalletsPage() {
-  const { wallets, transactions, deleteWallet } = useStore();
+  const { wallets, transactions, deleteWallet, isHydrating } = useStore();
   const { t } = useTranslation();
   const [dialog, setDialog] = useState<{ open: boolean; editing?: Wallet }>({ open: false });
   const [transferDialog, setTransferDialog] = useState<{ open: boolean; fromId?: string }>({ open: false });
@@ -87,7 +88,25 @@ export default function WalletsPage() {
 
       {/* Wallets grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {wallets.map((w) => {
+        {isHydrating && wallets.length === 0 ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="border-border/50 overflow-hidden">
+              <CardContent className="p-0">
+                <Skeleton className="h-20 w-full rounded-none" />
+                <div className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-2.5 w-28" />
+                  <div className="flex gap-2 pt-1">
+                    <Skeleton className="h-8 flex-1" />
+                    <Skeleton className="h-8 w-8" />
+                    <Skeleton className="h-8 w-8" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        ) : wallets.map((w) => {
           const count = txCount(w.id);
           return (
             <Card key={w.id} className="border-border/50 overflow-hidden">

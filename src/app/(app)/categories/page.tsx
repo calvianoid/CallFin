@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryDialog } from "@/components/forms/CategoryDialog";
 import { useStore } from "@/lib/store";
 import { Category, CategoryType } from "@/types";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function CategoriesPage() {
-  const { categories, transactions, budgets, deleteCategory } = useStore();
+  const { categories, transactions, budgets, deleteCategory, isHydrating } = useStore();
   const { t } = useTranslation();
   const [dialog, setDialog] = useState<{ open: boolean; editing?: Category; defaultType?: CategoryType }>({ open: false });
 
@@ -114,7 +115,19 @@ export default function CategoriesPage() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
-          {expenseCats.length === 0 ? (
+          {isHydrating && expenseCats.length === 0 ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border">
+                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-2.5 w-32" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            ))
+          ) : expenseCats.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">{t("cat.emptyExpense")}</p>
           ) : (
             expenseCats.map(renderCategory)
@@ -138,7 +151,19 @@ export default function CategoriesPage() {
           </Button>
         </CardHeader>
         <CardContent className="space-y-2">
-          {incomeCats.length === 0 ? (
+          {isHydrating && incomeCats.length === 0 ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border">
+                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-24" />
+                  <Skeleton className="h-2.5 w-32" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded" />
+                <Skeleton className="h-8 w-8 rounded" />
+              </div>
+            ))
+          ) : incomeCats.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6">{t("cat.emptyIncome")}</p>
           ) : (
             incomeCats.map(renderCategory)

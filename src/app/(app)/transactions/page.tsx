@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionDialog } from "@/components/forms/TransactionDialog";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
 import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
@@ -19,7 +20,7 @@ import { id, enUS } from "date-fns/locale";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function TransactionsPage() {
-  const { transactions, wallets, deleteTransaction } = useStore();
+  const { transactions, wallets, deleteTransaction, isHydrating } = useStore();
   const { t, locale } = useTranslation();
   const dateLocale = locale === "en" ? enUS : id;
   const [search, setSearch] = useState("");
@@ -129,7 +130,23 @@ export default function TransactionsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((tx) => {
+              {isHydrating && filtered.length === 0
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Skeleton className="h-7 w-7 rounded-full" />
+                          <Skeleton className="h-4 w-32" />
+                        </div>
+                      </TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                      <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                      <TableCell className="text-right"><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
+                      <TableCell><Skeleton className="h-7 w-7" /></TableCell>
+                    </TableRow>
+                  ))
+                : filtered.map((tx) => {
                 const wallet = wallets.find((w) => w.id === tx.wallet_id);
                 return (
                   <TableRow key={tx.id}>
