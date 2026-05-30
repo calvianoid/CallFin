@@ -12,6 +12,7 @@ import { TransferDialog } from "@/components/forms/TransferDialog";
 import { TransactionDialog } from "@/components/forms/TransactionDialog";
 import { Send, Sparkles, Plus } from "lucide-react";
 import { ParsedTransaction } from "@/types";
+import { formatRupiah } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { parseTransaction, parseGoalContribution, parseTransfer, answerQuery, isQuestion, ParsedGoalContribution, ParsedTransfer } from "@/lib/chat-ai";
 import { GoalContributionDialog } from "@/components/forms/GoalContributionDialog";
@@ -23,27 +24,23 @@ type Message =
   | { id: string; kind: "confirm_goal"; parsed: ParsedGoalContribution; status: "pending" | "confirmed" | "cancelled" }
   | { id: string; kind: "confirm_transfer"; parsed: ParsedTransfer; status: "pending" | "confirmed" | "cancelled" };
 
-const QUICK_PROMPTS = [
-  "Makan siang 50 ribu pakai GoPay",
-  "Transfer 500 ribu dari BCA ke GoPay",
-  "Nabung dana darurat 500 ribu dari BCA",
-  "Berapa pengeluaran bulan ini?",
-];
-
-const INITIAL_MESSAGES: Message[] = [
-  {
-    id: "welcome",
-    kind: "text",
-    role: "assistant",
-    content:
-      "Halo! Saya CallFin AI 👋\n\nSaya bisa membantu:\n\n**1. Mencatat transaksi** (konfirmasi dulu)\n   • \"Makan siang 50 ribu pakai GoPay\"\n   • \"Gaji masuk 10 juta ke BCA\"\n\n**2. Transfer antar dompet**\n   • \"Transfer 500 ribu dari BCA ke GoPay\"\n   • \"Topup GoPay 200rb dari BCA\"\n\n**3. Nabung ke Goal**\n   • \"Nabung dana darurat 500 ribu dari BCA\"\n\n**4. Menjawab pertanyaan**\n   • \"Berapa pengeluaran tanggal 15 Mei?\"\n   • \"Gimana progress goal Liburan Bali?\"",
-  },
-];
-
 export function ChatInterface() {
   const { wallets, addTransaction, addGoalContribution, addTransfer, transactions, budgets, goals } = useStore();
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const { t, locale } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>([
+    { id: "welcome", kind: "text", role: "assistant", content: t("chat.welcome") },
+  ]);
+  const quickPrompts = [t("chat.quick1"), t("chat.quick2"), t("chat.quick3"), t("chat.quick4")];
+
+  // Keep the welcome message in sync with the active language (only if untouched).
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.length === 1 && prev[0].id === "welcome"
+        ? [{ id: "welcome", kind: "text", role: "assistant", content: t("chat.welcome") }]
+        : prev,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [editDialog, setEditDialog] = useState<{ open: boolean; parsed?: ParsedTransaction; msgId?: string }>({ open: false });
@@ -68,7 +65,7 @@ export function ChatInterface() {
 
     // Questions are answered from real store data — no transaction is recorded.
     if (isQuestion(text)) {
-      const reply = answerQuery(text, { transactions, wallets, budgets, goals });
+      const reply = answerQuery(text, { transactions, wallets, budgets, goals }, locale);
       setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "text", role: "assistant", content: reply }]);
       setLoading(false);
       return;
@@ -120,7 +117,7 @@ export function ChatInterface() {
       }
       setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm", parsed, status: "pending" }]);
     } else {
-      const reply = answerQuery(text, { transactions, wallets, budgets, goals });
+      const reply = answerQuery(text, { transactions, wallets, budgets, goals }, locale);
       setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "text", role: "assistant", content: reply }]);
     }
     setLoading(false);
@@ -133,7 +130,7 @@ export function ChatInterface() {
       prev.map((m) => (m.id === msgId && m.kind === "confirm_goal" ? { ...m, status: "confirmed" } : m))
     );
 
-    const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(parsed.amount);
+    const fmt = formatRupiah(parsed.amount);
     const wallet = wallets.find((w) => w.id === parsed.wallet_id);
     setMessages((prev) => [
       ...prev,
@@ -141,7 +138,12 @@ export function ChatInterface() {
         id: Date.now().toString(),
         kind: "text",
         role: "assistant",
-        content: `🐷 Mantap! **${fmt}** dari ${wallet?.icon} **${wallet?.name}** sudah masuk ke goal **${parsed.goal_name}**. Progress goal kamu naik!`,
+        content: t("chat.reply.confirmedGoal", {
+          amount: fmt,
+          walletIcon: wallet?.icon ?? "",
+          walletName: wallet?.name ?? "",
+          goalName: parsed.goal_name,
+        }),
       },
     ]);
   }
@@ -152,7 +154,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: "Oke, setoran ke goal dibatalkan." },
+      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.cancelledGoal") },
     ]);
   }
 
@@ -166,7 +168,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: "🐷 Setoran ke goal sudah disimpan setelah diubah!" },
+      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.savedGoal") },
     ]);
   }
 
@@ -177,7 +179,7 @@ export function ChatInterface() {
       prev.map((m) => (m.id === msgId && m.kind === "confirm_transfer" ? { ...m, status: "confirmed" } : m))
     );
 
-    const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(parsed.amount);
+    const fmt = formatRupiah(parsed.amount);
     const fromW = wallets.find((w) => w.id === parsed.from_wallet_id);
     const toW = wallets.find((w) => w.id === parsed.to_wallet_id);
     setMessages((prev) => [
@@ -186,7 +188,13 @@ export function ChatInterface() {
         id: Date.now().toString(),
         kind: "text",
         role: "assistant",
-        content: `↔️ Transfer **${fmt}** dari ${fromW?.icon} **${fromW?.name}** ke ${toW?.icon} **${toW?.name}** berhasil. Saldo kedua dompet sudah diupdate.`,
+        content: t("chat.reply.confirmedTransfer", {
+          amount: fmt,
+          fromIcon: fromW?.icon ?? "",
+          fromName: fromW?.name ?? "",
+          toIcon: toW?.icon ?? "",
+          toName: toW?.name ?? "",
+        }),
       },
     ]);
   }
@@ -197,7 +205,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: "Oke, transfer dibatalkan." },
+      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.cancelledTransfer") },
     ]);
   }
 
@@ -211,7 +219,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: "↔️ Transfer sudah disimpan setelah diubah!" },
+      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.savedTransfer") },
     ]);
   }
 
@@ -229,7 +237,7 @@ export function ChatInterface() {
       prev.map((m) => (m.id === msgId && m.kind === "confirm" ? { ...m, status: "confirmed" } : m))
     );
 
-    const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(parsed.amount);
+    const fmt = formatRupiah(parsed.amount);
     const wallet = wallets.find((w) => w.id === parsed.wallet_id);
     setMessages((prev) => [
       ...prev,
@@ -237,7 +245,13 @@ export function ChatInterface() {
         id: Date.now().toString(),
         kind: "text",
         role: "assistant",
-        content: `✅ Tercatat! ${parsed.type === "income" ? "Pemasukan" : "Pengeluaran"} **${fmt}** kategori **${parsed.category}** dari ${wallet?.icon} **${wallet?.name}** sudah disimpan. Dashboard sebelah kanan sudah diperbarui.`,
+        content: t("chat.reply.confirmedTx", {
+          typeLabel: parsed.type === "income" ? t("reports.income") : t("reports.expense"),
+          amount: fmt,
+          category: parsed.category,
+          walletIcon: wallet?.icon ?? "",
+          walletName: wallet?.name ?? "",
+        }),
       },
     ]);
   }
@@ -252,7 +266,7 @@ export function ChatInterface() {
         id: Date.now().toString(),
         kind: "text",
         role: "assistant",
-        content: "Oke, transaksi dibatalkan. Ada yang ingin dicatat lagi?",
+        content: t("chat.reply.cancelledTx"),
       },
     ]);
   }
@@ -271,7 +285,7 @@ export function ChatInterface() {
         id: Date.now().toString(),
         kind: "text",
         role: "assistant",
-        content: "✅ Berhasil! Transaksi sudah disimpan setelah diubah. Dashboard sudah ter-update.",
+        content: t("chat.reply.savedTx"),
       },
     ]);
   }
@@ -329,7 +343,7 @@ export function ChatInterface() {
                 <ChatMessage
                   key={msg.id}
                   role="assistant"
-                  content={msg.status === "confirmed" ? "✅ Transaksi sudah disimpan." : "❌ Transaksi dibatalkan."}
+                  content={msg.status === "confirmed" ? t("chat.status.txSaved") : t("chat.status.txCancelled")}
                 />
               );
             }
@@ -353,7 +367,7 @@ export function ChatInterface() {
                 <ChatMessage
                   key={msg.id}
                   role="assistant"
-                  content={msg.status === "confirmed" ? "🐷 Setoran goal disimpan." : "❌ Setoran goal dibatalkan."}
+                  content={msg.status === "confirmed" ? t("chat.status.goalSaved") : t("chat.status.goalCancelled")}
                 />
               );
             }
@@ -377,7 +391,7 @@ export function ChatInterface() {
               <ChatMessage
                 key={msg.id}
                 role="assistant"
-                content={msg.status === "confirmed" ? "↔️ Transfer disimpan." : "❌ Transfer dibatalkan."}
+                content={msg.status === "confirmed" ? t("chat.status.transferSaved") : t("chat.status.transferCancelled")}
               />
             );
           })}
@@ -388,7 +402,7 @@ export function ChatInterface() {
 
       {/* Quick prompts */}
       <div className="px-4 pb-2 pt-2 flex gap-2 flex-wrap shrink-0 bg-card border-t border-border/50">
-        {QUICK_PROMPTS.map((prompt) => (
+        {quickPrompts.map((prompt) => (
           <button
             key={prompt}
             onClick={() => sendMessage(prompt)}

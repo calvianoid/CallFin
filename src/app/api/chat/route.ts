@@ -18,8 +18,8 @@ Ketika pengguna menyebutkan transaksi (pengeluaran atau pemasukan), ekstrak info
 
 Kategori yang tersedia: Makanan, Transportasi, Tagihan, Belanja, Hiburan, Kesehatan, Pendidikan, Gaji, Freelance, Investasi, Lainnya.
 
-Jika bukan transaksi, berikan respons biasa yang membantu dan informatif dalam Bahasa Indonesia.
-Selalu gunakan bahasa Indonesia yang ramah dan profesional.`;
+Jika bukan transaksi, berikan respons biasa yang membantu dan informatif.
+Selalu balas dalam bahasa yang sama dengan pesan pengguna (Bahasa Indonesia atau English), dengan gaya ramah dan profesional.`;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
