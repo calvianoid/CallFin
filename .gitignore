@@ -49,3 +49,4 @@ supabase/.temp/
 supabase/.tmp/
 supabase/seed.sql
 .supabase/
+screenshots/

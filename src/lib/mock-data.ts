@@ -15,11 +15,18 @@ export const mockWallets: Wallet[] = [
   { id: "w4", user_id: "u1", name: "Kartu Kredit", type: "credit", balance: -3200000, color: "bg-rose-500", icon: "💳" },
 ];
 
-// 12 months ending at the current month (today ≈ 2026-05).
-const PERSONA_MONTHS = [
-  "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11",
-  "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05",
-];
+// 12 months ending at the *current* month, computed relative to today so the
+// demo data never goes stale (Transactions/Reports default to this month).
+function lastTwelveMonths(): string[] {
+  const out: string[] = [];
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return out;
+}
+const PERSONA_MONTHS = lastTwelveMonths();
 
 /** Deterministic ±swing variation around a base (rounded to nearest 1k). */
 function vary(base: number, seed: number, swing: number): number {
@@ -102,12 +109,14 @@ function buildMockTransactions(): Transaction[] {
 
 export const mockTransactions: Transaction[] = buildMockTransactions();
 
+const CURRENT_MONTH = new Date().toISOString().slice(0, 7); // YYYY-MM
+
 export const mockBudgets: Budget[] = [
-  { id: "b1", user_id: "u1", category: "Food & Drinks", limit_amount: 3500000, month_year: "2026-05", spent: 0 },
-  { id: "b2", user_id: "u1", category: "Transportation", limit_amount: 1200000, month_year: "2026-05", spent: 0 },
-  { id: "b3", user_id: "u1", category: "Entertainment", limit_amount: 700000, month_year: "2026-05", spent: 0 },
-  { id: "b4", user_id: "u1", category: "Shopping", limit_amount: 1500000, month_year: "2026-05", spent: 0 },
-  { id: "b5", user_id: "u1", category: "Rent", limit_amount: 3500000, month_year: "2026-05", spent: 0 },
+  { id: "b1", user_id: "u1", category: "Food & Drinks", limit_amount: 3500000, month_year: CURRENT_MONTH, spent: 0 },
+  { id: "b2", user_id: "u1", category: "Transportation", limit_amount: 1200000, month_year: CURRENT_MONTH, spent: 0 },
+  { id: "b3", user_id: "u1", category: "Entertainment", limit_amount: 700000, month_year: CURRENT_MONTH, spent: 0 },
+  { id: "b4", user_id: "u1", category: "Shopping", limit_amount: 1500000, month_year: CURRENT_MONTH, spent: 0 },
+  { id: "b5", user_id: "u1", category: "Rent", limit_amount: 3500000, month_year: CURRENT_MONTH, spent: 0 },
 ];
 
 export const mockGoals: Goal[] = [
