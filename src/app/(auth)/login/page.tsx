@@ -34,6 +34,14 @@ function LoginForm() {
     if (confirm) {
       setEmail(confirm);
       setInfo(t("auth.signInConfirmed", { email: confirm }));
+      return;
+    }
+    if (searchParams.get("reset") === "success") {
+      setInfo(t("auth.resetSuccess"));
+      return;
+    }
+    if (searchParams.get("error") === "callback") {
+      setError(t("auth.callbackError"));
     }
   }, [searchParams, t]);
 
@@ -107,7 +115,12 @@ function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="password">{t("auth.password")}</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium" htmlFor="password">{t("auth.password")}</label>
+              <Link href="/forgot-password" className="text-xs text-primary font-medium hover:underline">
+                {t("auth.forgotPassword")}
+              </Link>
+            </div>
             <Input
               id="password"
               type="password"

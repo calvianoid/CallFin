@@ -19,6 +19,7 @@ import { useStore } from "@/lib/store";
 import { usePreferences } from "@/lib/preferences";
 import { getSupabaseBrowser } from "@/lib/supabase/browser-client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 
 export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -421,22 +422,8 @@ export default function SettingsPage() {
               <CardTitle className="text-base">{t("settings.changePassword")}</CardTitle>
               <CardDescription>{t("settings.changePasswordDesc")}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <Label>{t("settings.oldPassword")}</Label>
-                <Input type="password" placeholder="••••••••" />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("settings.newPassword")}</Label>
-                <Input type="password" />
-              </div>
-              <div className="space-y-2">
-                <Label>{t("settings.confirmPassword")}</Label>
-                <Input type="password" />
-              </div>
-              <div className="flex justify-end pt-2">
-                <Button size="sm">{t("settings.updatePassword")}</Button>
-              </div>
+            <CardContent>
+              <ChangePasswordForm />
             </CardContent>
           </Card>
 

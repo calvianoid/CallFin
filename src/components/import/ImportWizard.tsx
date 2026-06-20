@@ -372,9 +372,9 @@ export function ImportWizard() {
                   icon: w.icon,
                 }));
                 return (
-                  <div key={raw} className="flex items-center gap-2 p-2 rounded-lg border border-border">
-                    <span className="text-sm font-medium flex-1 truncate">{raw}</span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <div key={raw} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg border border-border">
+                    <span className="text-sm font-medium flex-1 min-w-0 truncate">{raw}</span>
+                    <ArrowRight className="hidden sm:block h-3 w-3 text-muted-foreground shrink-0" />
                     <Combobox
                       value={walletMap[raw] || ""}
                       onValueChange={(v) => setWalletMap((m) => ({ ...m, [raw]: v }))}
@@ -384,7 +384,7 @@ export function ImportWizard() {
                       emptyMessage="Tidak ada dompet."
                       onCreate={() => setNewWalletFor(raw)}
                       createLabel="Buat dompet baru"
-                      triggerClassName="w-[220px]"
+                      triggerClassName="w-full sm:w-[220px]"
                     />
                   </div>
                 );
@@ -406,12 +406,12 @@ export function ImportWizard() {
                   .filter((c) => c.type === type && !c.isInternal)
                   .map((c) => ({ value: c.name, label: c.name, icon: c.icon }));
                 return (
-                  <div key={raw} className="flex items-center gap-2 p-2 rounded-lg border border-border">
-                    <span className="text-sm font-medium flex-1 truncate flex items-center gap-1">
-                      {type === "income" ? <TrendingUp className="h-3 w-3 text-green-600" /> : <TrendingDown className="h-3 w-3 text-red-500" />}
-                      {raw}
+                  <div key={raw} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg border border-border">
+                    <span className="text-sm font-medium flex-1 min-w-0 truncate flex items-center gap-1">
+                      {type === "income" ? <TrendingUp className="h-3 w-3 text-green-600 shrink-0" /> : <TrendingDown className="h-3 w-3 text-red-500 shrink-0" />}
+                      <span className="truncate">{raw}</span>
                     </span>
-                    <ArrowRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                    <ArrowRight className="hidden sm:block h-3 w-3 text-muted-foreground shrink-0" />
                     <Combobox
                       value={categoryMap[raw] || ""}
                       onValueChange={(v) => setCategoryMap((m) => ({ ...m, [raw]: v }))}
@@ -421,7 +421,7 @@ export function ImportWizard() {
                       emptyMessage="Tidak ada kategori."
                       onCreate={() => setNewCategoryFor({ name: raw, type })}
                       createLabel="Buat kategori baru"
-                      triggerClassName="w-[240px]"
+                      triggerClassName="w-full sm:w-[240px]"
                     />
                   </div>
                 );

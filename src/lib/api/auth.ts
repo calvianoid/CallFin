@@ -3,6 +3,8 @@
 import { getSupabaseServer } from "@/lib/supabase/server-client";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/supabase/config";
 
 /**
  * Some email patterns are syntactically valid per RFC but rejected by Supabase
@@ -106,4 +108,33 @@ export async function signOut() {
   await sb.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login");
+}
+
+/**
+ * Change-password from settings (while logged in). Verifies the old password via
+ * a throwaway client so we don't disturb the active session cookies, then updates.
+ */
+export async function changePassword(formData: FormData) {
+  const oldPassword = String(formData.get("oldPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  if (newPassword.length < 8) return { error: "Password baru minimal 8 karakter." };
+
+  const sb = await getSupabaseServer();
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user?.email) return { error: "Kamu harus login untuk mengubah password." };
+
+  // Verify the old password without touching the live session: a standalone,
+  // non-persisting client just checks the credentials.
+  const verifier = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { error: verifyErr } = await verifier.auth.signInWithPassword({
+    email: user.email,
+    password: oldPassword,
+  });
+  if (verifyErr) return { error: "oldPasswordWrong" };
+
+  const { error } = await sb.auth.updateUser({ password: newPassword });
+  if (error) return { error: friendlyAuthError(error.message) };
+  return { ok: true };
 }

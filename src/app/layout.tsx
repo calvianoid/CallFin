@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { LocaleProvider } from "@/lib/i18n/context";
 import { PreferencesProvider } from "@/lib/preferences";
 import { DemoModeBanner } from "@/components/layout/DemoModeBanner";
 import { DocumentTitle } from "@/components/layout/DocumentTitle";
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import "./globals.css";
 
 const jakartaSans = Plus_Jakarta_Sans({
@@ -53,6 +54,20 @@ export const metadata: Metadata = {
     title: APP_TITLE,
     description: APP_DESC,
   },
+  // Installable PWA / iOS "Add to Home Screen" behavior.
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_NAME,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
 };
 
 export default function RootLayout({
@@ -73,6 +88,7 @@ export default function RootLayout({
               <DocumentTitle />
               <DemoModeBanner />
               {children}
+              <ServiceWorkerRegister />
             </PreferencesProvider>
           </LocaleProvider>
         </ThemeProvider>
