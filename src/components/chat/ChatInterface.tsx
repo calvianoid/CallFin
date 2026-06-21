@@ -18,6 +18,30 @@ import { parseTransaction, parseGoalContribution, parseTransfer, answerQuery, is
 import { GoalContributionDialog } from "@/components/forms/GoalContributionDialog";
 import { useTranslation } from "@/lib/i18n/context";
 
+/** Shape returned by /api/parse-message (Claude). Mirrors the route's zod schema. */
+type AIIntent = {
+  kind: "transaction" | "transfer" | "goal_contribution" | "none";
+  transaction?: { type: "income" | "expense"; amount: number; category: string; description: string; date: string; wallet_id: string | null } | null;
+  transfer?: { from_wallet_id: string; to_wallet_id: string; amount: number } | null;
+  goal_contribution?: { goal_id: string; amount: number; wallet_id: string | null } | null;
+};
+
+/** Ask Claude to parse freeform text. Returns null on any failure so the caller
+ *  can fall back to the local regex parser (no key, error, offline → regex). */
+async function aiParse(payload: unknown): Promise<AIIntent | null> {
+  try {
+    const res = await fetch("/api/parse-message", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as AIIntent;
+  } catch {
+    return null;
+  }
+}
+
 type Message =
   | { id: string; kind: "text"; role: "user" | "assistant"; content: string }
   | { id: string; kind: "confirm"; parsed: ParsedTransaction; status: "pending" | "confirmed" | "cancelled" }
@@ -25,7 +49,7 @@ type Message =
   | { id: string; kind: "confirm_transfer"; parsed: ParsedTransfer; status: "pending" | "confirmed" | "cancelled" };
 
 export function ChatInterface() {
-  const { wallets, addTransaction, addGoalContribution, addTransfer, transactions, budgets, goals } = useStore();
+  const { wallets, addTransaction, addGoalContribution, addTransfer, transactions, budgets, goals, categories } = useStore();
   const { t, locale } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
     { id: "welcome", kind: "text", role: "assistant", content: t("chat.welcome") },
@@ -61,8 +85,6 @@ export function ChatInterface() {
     setInput("");
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 700 + Math.random() * 500));
-
     // Questions are answered from real store data — no transaction is recorded.
     if (isQuestion(text)) {
       const reply = answerQuery(text, { transactions, wallets, budgets, goals }, locale);
@@ -71,6 +93,69 @@ export function ChatInterface() {
       return;
     }
 
+    // Smart path: let Claude understand freeform text. Returns "none"/null when
+    // unconfigured or unsure → we fall through to the regex parser below.
+    const ai = await aiParse({
+      text,
+      locale,
+      today: new Date().toISOString().slice(0, 10),
+      wallets: wallets.map((w) => ({ id: w.id, name: w.name })),
+      goals: goals.map((g) => ({ id: g.id, name: g.goal_name })),
+      categories: categories.filter((c) => !c.isInternal).map((c) => ({ name: c.name, type: c.type })),
+    });
+
+    if (ai?.kind === "transfer" && ai.transfer) {
+      const fromW = wallets.find((w) => w.id === ai.transfer!.from_wallet_id);
+      const toW = wallets.find((w) => w.id === ai.transfer!.to_wallet_id);
+      if (fromW && toW && fromW.id !== toW.id) {
+        const parsed: ParsedTransfer = {
+          kind: "transfer",
+          from_wallet_id: fromW.id,
+          to_wallet_id: toW.id,
+          from_name: fromW.name,
+          to_name: toW.name,
+          amount: ai.transfer.amount,
+        };
+        setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_transfer", parsed, status: "pending" }]);
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (ai?.kind === "goal_contribution" && ai.goal_contribution) {
+      const goal = goals.find((g) => g.id === ai.goal_contribution!.goal_id);
+      const wallet = (ai.goal_contribution.wallet_id && wallets.find((w) => w.id === ai.goal_contribution!.wallet_id)) || wallets[0];
+      if (goal && wallet) {
+        const parsed: ParsedGoalContribution = {
+          kind: "goal_contribution",
+          goal_id: goal.id,
+          goal_name: goal.goal_name,
+          amount: ai.goal_contribution.amount,
+          wallet_id: wallet.id,
+        };
+        setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_goal", parsed, status: "pending" }]);
+        setLoading(false);
+        return;
+      }
+    }
+
+    if (ai?.kind === "transaction" && ai.transaction) {
+      const t = ai.transaction;
+      const wallet_id = (t.wallet_id && wallets.find((w) => w.id === t.wallet_id)?.id) || wallets[0]?.id;
+      const parsed: ParsedTransaction = {
+        type: t.type,
+        amount: t.amount,
+        category: t.category,
+        description: t.description,
+        date: t.date,
+        wallet_id,
+      };
+      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm", parsed, status: "pending" }]);
+      setLoading(false);
+      return;
+    }
+
+    // ── Fallback: local regex parser (also the only path when AI is unconfigured) ──
     const walletNames = wallets.map((w) => ({ id: w.id, name: w.name }));
 
     // 1. Try transfer first (very specific: mentions transfer + 2 wallets)
