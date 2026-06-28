@@ -24,6 +24,7 @@ import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Budget } from "@/types";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
+import { formatRupiah } from "@/lib/mock-data";
 import { AlertCircle } from "lucide-react";
 
 interface BudgetDialogProps {
@@ -37,7 +38,7 @@ export function BudgetDialog({
   onOpenChange,
   initial,
 }: BudgetDialogProps) {
-  const { addBudget, updateBudget, budgets, categories } = useStore();
+  const { addBudget, updateBudget, budgets, categories, budgetCap } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial;
 
@@ -82,10 +83,25 @@ export function BudgetDialog({
     expenseCategories.length > 0 &&
     expenseCategories.every((c) => usedCategories.has(c.name));
 
+  // Sum of the OTHER category budgets this month (excludes the one being edited).
+  const otherLimitsSum = budgets
+    .filter(
+      (b) =>
+        b.month_year === currentMonth && (!isEdit || b.id !== initial?.id),
+    )
+    .reduce((s, b) => s + b.limit_amount, 0);
+
+  const numLimit = parseFloat(limit) || 0;
+  // When a total cap is set, the category budgets must fit within it.
+  const overCap =
+    budgetCap !== null && numLimit > 0 && otherLimitsSum + numLimit > budgetCap;
+  const capRemaining = budgetCap !== null ? budgetCap - otherLimitsSum : 0;
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const num = parseFloat(limit);
     if (!num) return;
+    if (overCap) return;
 
     // Guard against duplicates on submit
     if (!isEdit && usedCategories.has(category)) return;
@@ -147,6 +163,17 @@ export function BudgetDialog({
               required
               autoFocus
             />
+            {budgetCap !== null && !overCap && (
+              <p className="text-xs text-muted-foreground">
+                {t("budgetDlg.capRemaining", { amount: formatRupiah(Math.max(capRemaining, 0)) })}
+              </p>
+            )}
+            {overCap && (
+              <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <span>{t("budgetDlg.overCap", { amount: formatRupiah(Math.max(capRemaining, 0)) })}</span>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -157,7 +184,7 @@ export function BudgetDialog({
             >
               {t("common.cancel")}
             </Button>
-            <Button type="submit" disabled={!isEdit && allUsed}>
+            <Button type="submit" disabled={overCap || (!isEdit && allUsed)}>
               {isEdit ? t("common.saveChanges") : t("budgetDlg.title.add")}
             </Button>
           </DialogFooter>

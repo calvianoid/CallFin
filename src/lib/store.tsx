@@ -54,6 +54,10 @@ interface StoreContextValue {
   addBudget: (b: Omit<Budget, "id" | "user_id">) => void;
   updateBudget: (id: string, patch: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
+  /** Total monthly budget cap ("pagu total") for the current month, or null if unset. */
+  budgetCap: number | null;
+  /** Set (or clear, with null) the current month's total budget cap. */
+  setBudgetCap: (amount: number | null) => void;
   addGoal: (g: Omit<Goal, "id" | "user_id">) => void;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
@@ -102,6 +106,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState<Budget[]>(
     SUPABASE_READY ? [] : mockBudgets,
   );
+  const [budgetCap, setBudgetCapState] = useState<number | null>(null);
   const [goals, setGoals] = useState<Goal[]>(SUPABASE_READY ? [] : mockGoals);
   const [categories, setCategories] = useState<Category[]>(() =>
     SUPABASE_READY
@@ -129,6 +134,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         import("./api/budgets"),
         import("./api/goals"),
         import("./api/categories"),
+        import("./api/budget-caps"),
       ]);
       const [
         { getProfile },
@@ -137,6 +143,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         { listBudgets },
         { listGoals },
         { listCategories },
+        { getBudgetCap },
       ] = apis;
 
       async function safe<T>(
@@ -152,17 +159,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const [p, ws, txs, bs, gs, cs] = await Promise.all([
+      const thisMonth = new Date().toISOString().slice(0, 7);
+      const [p, ws, txs, bs, gs, cs, cap] = await Promise.all([
         safe("profile", getProfile, null as unknown as UserProfile | null),
         safe("wallets", listWallets, [] as Wallet[]),
         safe("transactions", listTransactions, [] as Transaction[]),
-        safe(
-          "budgets",
-          () => listBudgets(new Date().toISOString().slice(0, 7)),
-          [] as Budget[],
-        ),
+        safe("budgets", () => listBudgets(thisMonth), [] as Budget[]),
         safe("goals", listGoals, [] as Goal[]),
         safe("categories", listCategories, [] as Category[]),
+        safe("budgetCap", () => getBudgetCap(thisMonth), null as number | null),
       ]);
 
       if (cancelled) return;
@@ -185,6 +190,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       setWallets(ws);
       setTransactions(txs);
       setBudgets(bs);
+      setBudgetCapState(cap);
       setGoals(gs);
       setCategories(cs);
       setIsHydrating(false);
@@ -606,6 +612,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const setBudgetCap = useCallback((amount: number | null) => {
+    setBudgetCapState(amount);
+
+    if (SUPABASE_READY) {
+      const month = new Date().toISOString().slice(0, 7);
+      import("./api/budget-caps")
+        .then((m) =>
+          amount === null ? m.deleteBudgetCap(month) : m.setBudgetCap(month, amount),
+        )
+        .catch((err) => console.error("[store] setBudgetCap failed:", err));
+    }
+  }, []);
+
   const addGoal = useCallback((g: Omit<Goal, "id" | "user_id">) => {
     const tempId = makeId();
     setGoals((prev) => [...prev, { ...g, id: tempId, user_id: "u1" }]);
@@ -718,6 +737,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         addBudget,
         updateBudget,
         deleteBudget,
+        budgetCap,
+        setBudgetCap,
         addGoal,
         updateGoal,
         deleteGoal,

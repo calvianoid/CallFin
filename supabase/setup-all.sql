@@ -11,6 +11,7 @@ drop trigger if exists on_auth_user_created on auth.users;
 
 drop table if exists public.chat_history cascade;
 drop table if exists public.transactions cascade;
+drop table if exists public.budget_caps cascade;
 drop table if exists public.budgets cascade;
 drop table if exists public.goals cascade;
 drop table if exists public.categories cascade;
@@ -129,6 +130,16 @@ create table public.budgets (
   constraint budgets_unique_cat_month unique (user_id, category, month_year)
 );
 create index budgets_user_month_idx on public.budgets(user_id, month_year);
+
+create table public.budget_caps (
+  id            uuid primary key default uuid_generate_v4(),
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  total_amount  numeric(16, 2) not null check (total_amount > 0),
+  month_year    text not null check (month_year ~ '^\d{4}-\d{2}$'),
+  created_at    timestamptz not null default now(),
+  constraint budget_caps_unique_month unique (user_id, month_year)
+);
+create index budget_caps_user_month_idx on public.budget_caps(user_id, month_year);
 
 create type chat_role as enum ('user', 'assistant');
 
@@ -265,6 +276,7 @@ alter table public.wallets enable row level security;
 alter table public.categories enable row level security;
 alter table public.transactions enable row level security;
 alter table public.budgets enable row level security;
+alter table public.budget_caps enable row level security;
 alter table public.goals enable row level security;
 alter table public.chat_history enable row level security;
 
@@ -290,6 +302,11 @@ create policy "budgets own read" on public.budgets for select using ((select aut
 create policy "budgets own insert" on public.budgets for insert with check ((select auth.uid()) = user_id);
 create policy "budgets own update" on public.budgets for update using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 create policy "budgets own delete" on public.budgets for delete using ((select auth.uid()) = user_id);
+
+create policy "budget_caps own read" on public.budget_caps for select using ((select auth.uid()) = user_id);
+create policy "budget_caps own insert" on public.budget_caps for insert with check ((select auth.uid()) = user_id);
+create policy "budget_caps own update" on public.budget_caps for update using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create policy "budget_caps own delete" on public.budget_caps for delete using ((select auth.uid()) = user_id);
 
 create policy "goals own read" on public.goals for select using ((select auth.uid()) = user_id);
 create policy "goals own insert" on public.goals for insert with check ((select auth.uid()) = user_id);

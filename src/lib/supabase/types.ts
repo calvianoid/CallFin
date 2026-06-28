@@ -96,6 +96,20 @@ export type Database = {
         };
         Update: Partial<Database["public"]["Tables"]["budgets"]["Row"]>;
       };
+      budget_caps: {
+        Row: {
+          id: string;
+          user_id: string;
+          total_amount: number;
+          month_year: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["budget_caps"]["Row"], "id" | "created_at"> & {
+          id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["budget_caps"]["Row"]>;
+      };
       goals: {
         Row: {
           id: string;
