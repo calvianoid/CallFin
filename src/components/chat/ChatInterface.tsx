@@ -56,6 +56,11 @@ export function ChatInterface() {
   ]);
   const quickPrompts = [t("chat.quick1"), t("chat.quick2"), t("chat.quick3"), t("chat.quick4")];
 
+  // Guards against a confirm card being acted on twice (e.g. an impatient
+  // double-tap before React re-renders the card away) — which would otherwise
+  // create duplicate transactions/transfers/contributions.
+  const handledRef = useRef<Set<string>>(new Set());
+
   // Keep the welcome message in sync with the active language (only if untouched).
   useEffect(() => {
     setMessages((prev) =>
@@ -209,6 +214,8 @@ export function ChatInterface() {
   }
 
   function handleConfirmGoal(msgId: string, parsed: ParsedGoalContribution) {
+    if (handledRef.current.has(msgId)) return;
+    handledRef.current.add(msgId);
     addGoalContribution(parsed.goal_id, parsed.wallet_id, parsed.amount);
 
     setMessages((prev) =>
@@ -258,6 +265,8 @@ export function ChatInterface() {
   }
 
   function handleConfirmTransfer(msgId: string, parsed: ParsedTransfer) {
+    if (handledRef.current.has(msgId)) return;
+    handledRef.current.add(msgId);
     addTransfer(parsed.from_wallet_id, parsed.to_wallet_id, parsed.amount);
 
     setMessages((prev) =>
@@ -309,6 +318,8 @@ export function ChatInterface() {
   }
 
   function handleConfirm(msgId: string, parsed: ParsedTransaction) {
+    if (handledRef.current.has(msgId)) return;
+    handledRef.current.add(msgId);
     addTransaction({
       type: parsed.type,
       amount: parsed.amount,
