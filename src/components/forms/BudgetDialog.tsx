@@ -25,6 +25,7 @@ import { Budget } from "@/types";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 import { formatRupiah } from "@/lib/mock-data";
+import { getYearMonth } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 
 interface BudgetDialogProps {
@@ -42,7 +43,7 @@ export function BudgetDialog({
   const { t } = useTranslation();
   const isEdit = !!initial;
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = getYearMonth();
 
   // Only expense categories, and not internal ones (Tabungan is system-managed)
   const expenseCategories = categories.filter(

@@ -12,18 +12,19 @@ import { useTranslation } from "@/lib/i18n/context";
 import { formatMonthLabel } from "@/components/ui/month-picker";
 import { useMemo } from "react";
 import { MonthlyData } from "@/types";
+import { getYearMonth } from "@/lib/utils";
 
 export function DashboardContent() {
   const { transactions, budgets, goals } = useStore();
   const { t } = useTranslation();
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = getYearMonth();
 
   const monthlyData: MonthlyData[] = useMemo(() => {
     const now = new Date();
     const months: string[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push(d.toISOString().slice(0, 7)); // "YYYY-MM"
+      months.push(getYearMonth(d));
     }
 
     const SHORT_MONTHS = [

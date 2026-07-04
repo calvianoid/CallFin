@@ -1,4 +1,5 @@
 import { Transaction, Budget, Goal, MonthlyData, Wallet, Category } from "@/types";
+import { getYearMonth } from "@/lib/utils";
 
 /**
  * Demo persona — "Andi", a ~28 y/o software engineer in Jakarta.
@@ -22,7 +23,7 @@ function lastTwelveMonths(): string[] {
   const now = new Date();
   for (let i = 11; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    out.push(getYearMonth(d));
   }
   return out;
 }
@@ -109,7 +110,7 @@ function buildMockTransactions(): Transaction[] {
 
 export const mockTransactions: Transaction[] = buildMockTransactions();
 
-const CURRENT_MONTH = new Date().toISOString().slice(0, 7); // YYYY-MM
+const CURRENT_MONTH = getYearMonth();
 
 export const mockBudgets: Budget[] = [
   { id: "b1", user_id: "u1", category: "Food & Drinks", limit_amount: 3500000, month_year: CURRENT_MONTH, spent: 0 },

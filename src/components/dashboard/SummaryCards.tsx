@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight } from "lucide-react";
 import { formatRupiah } from "@/lib/mock-data";
 import { Transaction } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, getYearMonth } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 import { useStore } from "@/lib/store";
 
@@ -33,26 +33,27 @@ export function SummaryCards({ transactions }: SummaryCardsProps) {
       </div>
     );
   }
-  const totalIncome = transactions
+  // Month-over-month change: this month's income/expense vs last month's.
+  const now = new Date();
+  const thisMonth = getYearMonth(now);
+  const lastMonth = getYearMonth(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+
+  const thisMonthTx = transactions.filter((t) => t.date.slice(0, 7) === thisMonth);
+
+  const totalIncome = thisMonthTx
     .filter((t) => t.type === "income")
     .reduce((s, t) => s + t.amount, 0);
 
-  const totalExpense = transactions
+  const totalExpense = thisMonthTx
     .filter((t) => t.type === "expense" && !t.goal_id && !t.transfer_to_wallet_id)
     .reduce((s, t) => s + t.amount, 0);
 
-  const totalSavings = transactions
+  const totalSavings = thisMonthTx
     .filter((t) => t.goal_id)
     .reduce((s, t) => s + t.amount, 0);
 
   const balance = totalIncome - totalExpense - totalSavings;
   const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(0) : "0";
-
-  // Month-over-month change: this month's income/expense vs last month's.
-  const now = new Date();
-  const ym = (d: Date) => d.toISOString().slice(0, 7);
-  const thisMonth = ym(now);
-  const lastMonth = ym(new Date(now.getFullYear(), now.getMonth() - 1, 1));
 
   const monthSum = (month: string, kind: "income" | "expense") => {
     let sum = 0;

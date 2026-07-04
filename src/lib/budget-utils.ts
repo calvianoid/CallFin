@@ -1,4 +1,5 @@
 import type { Budget, Transaction } from "@/types";
+import { getYearMonth } from "@/lib/utils";
 
 /**
  * Compute the up-to-date "spent" amount for a budget from the current
@@ -122,7 +123,7 @@ export function computeBudgetTrend(
   const month = Number(mStr); // 1-based
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  const nowMonth = now.toISOString().slice(0, 7);
+  const nowMonth = getYearMonth(now);
   const isCurrentMonth = budget.month_year === nowMonth;
   const isPast = budget.month_year < nowMonth;
   // For the current month we only know actuals through today; past months are

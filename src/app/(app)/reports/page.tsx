@@ -15,7 +15,7 @@ import {
   Calendar, Activity, Receipt, ArrowUpRight, ArrowDownRight,
   Wallet as WalletIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getYearMonth } from "@/lib/utils";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   LineChart, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar, Legend,
@@ -31,7 +31,7 @@ const CHART_COLORS = [
 export default function ReportsPage() {
   const { transactions, budgets, goals, wallets, isHydrating } = useStore();
   const { t, locale } = useTranslation();
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(() => getYearMonth());
 
   // ──────────────────────────────────────────────────────────────────────────
   // Main stats for selected month

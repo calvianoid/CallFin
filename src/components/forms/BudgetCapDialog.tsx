@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 import { formatRupiah } from "@/lib/mock-data";
+import { getYearMonth } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 
 interface BudgetCapDialogProps {
@@ -26,7 +27,7 @@ export function BudgetCapDialog({ open, onOpenChange }: BudgetCapDialogProps) {
   const { budgetCap, setBudgetCap, budgets } = useStore();
   const { t } = useTranslation();
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = getYearMonth();
   // The cap can't be smaller than what's already allocated to category budgets.
   const minRequired = budgets
     .filter((b) => b.month_year === currentMonth)

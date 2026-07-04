@@ -15,7 +15,7 @@ import { formatRupiah, CATEGORY_COLORS } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { Transaction, Wallet } from "@/types";
 import { Search, TrendingUp, TrendingDown, Plus, Trash2, PiggyBank, ArrowLeftRight, Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getYearMonth } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id, enUS } from "date-fns/locale";
 import { useTranslation } from "@/lib/i18n/context";
@@ -73,7 +73,7 @@ export default function TransactionsPage() {
   const [walletFilter, setWalletFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
-  const [month, setMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const [month, setMonth] = useState(() => getYearMonth());
 
   // First narrow by selected month, then apply other filters
   const inMonth = transactions.filter((t) => t.date.startsWith(month));
