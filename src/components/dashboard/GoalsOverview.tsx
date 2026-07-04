@@ -50,7 +50,6 @@ export function GoalsOverview({ goals }: GoalsOverviewProps) {
       <CardContent className="space-y-4">
         {goals.map((g) => {
           const pct = Math.min((g.current_amount / g.target_amount) * 100, 100);
-          const remaining = g.target_amount - g.current_amount;
           const daysLeft = differenceInDays(parseISO(g.deadline), new Date());
 
           return (

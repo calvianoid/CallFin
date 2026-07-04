@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useSyncExternalStore, ReactNode } from "react";
 
 /**
  * Lightweight user-preferences store (localStorage-backed) for UI feature
@@ -11,7 +11,7 @@ interface PreferencesContextValue {
   /** Show the Financial Freedom menu item in the sidebar. Off by default — opt-in via Settings. */
   showFreedom: boolean;
   setShowFreedom: (v: boolean) => void;
-  /** True once localStorage has been read (avoids hydration flash). */
+  /** True once running on the client (avoids hydration flash). */
   ready: boolean;
 }
 
@@ -19,23 +19,30 @@ const PreferencesContext = createContext<PreferencesContextValue | null>(null);
 
 const KEY_FREEDOM = "callfin.showFreedom";
 
-export function PreferencesProvider({ children }: { children: ReactNode }) {
-  const [showFreedom, setShowFreedomState] = useState(false); // default: hidden (opt-in)
-  const [ready, setReady] = useState(false);
+// localStorage never notifies same-tab changes; re-renders after
+// setShowFreedom() come from the override state below.
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(KEY_FREEDOM);
-      if (saved === "0" || saved === "1") setShowFreedomState(saved === "1");
-    } catch {
-      // ignore
-    } finally {
-      setReady(true);
-    }
-  }, []);
+export function PreferencesProvider({ children }: { children: ReactNode }) {
+  // Server snapshot: default hidden. Client snapshot: whatever was saved.
+  const stored = useSyncExternalStore(
+    emptySubscribe,
+    () => {
+      try {
+        return localStorage.getItem(KEY_FREEDOM);
+      } catch {
+        return null;
+      }
+    },
+    () => null,
+  );
+  const ready = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [override, setOverride] = useState<boolean | null>(null);
+
+  const showFreedom = override ?? stored === "1";
 
   const setShowFreedom = useCallback((v: boolean) => {
-    setShowFreedomState(v);
+    setOverride(v);
     try {
       localStorage.setItem(KEY_FREEDOM, v ? "1" : "0");
     } catch {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,15 +30,24 @@ interface GoalContributionDialogProps {
   onSaved?: () => void;
 }
 
-export function GoalContributionDialog({
-  open,
+export function GoalContributionDialog({ open, onOpenChange, ...formProps }: GoalContributionDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <GoalContributionForm onOpenChange={onOpenChange} {...formProps} />}
+    </Dialog>
+  );
+}
+
+function GoalContributionForm({
   onOpenChange,
   goalId,
   defaultAmount,
   defaultWalletId,
   fromAI,
   onSaved,
-}: GoalContributionDialogProps) {
+}: Omit<GoalContributionDialogProps, "open">) {
   const { goals, wallets, addGoalContribution } = useStore();
   const { t } = useTranslation();
 
@@ -52,15 +61,6 @@ export function GoalContributionDialog({
     defaultAmount ? String(defaultAmount) : "",
   );
   const [note, setNote] = useState("");
-
-  useEffect(() => {
-    if (open) {
-      setSelectedGoalId(goalId || goals[0]?.id || "");
-      setWalletId(defaultWalletId || wallets[0]?.id || "");
-      setAmount(defaultAmount ? String(defaultAmount) : "");
-      setNote("");
-    }
-  }, [open, goalId, defaultWalletId, defaultAmount, goals, wallets]);
 
   const goal = goals.find((g) => g.id === selectedGoalId);
   const wallet = wallets.find((w) => w.id === walletId);
@@ -77,8 +77,7 @@ export function GoalContributionDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI ? (
@@ -191,7 +190,6 @@ export function GoalContributionDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

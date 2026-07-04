@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,16 @@ interface BudgetCapDialogProps {
 }
 
 export function BudgetCapDialog({ open, onOpenChange }: BudgetCapDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <BudgetCapForm onOpenChange={onOpenChange} />}
+    </Dialog>
+  );
+}
+
+function BudgetCapForm({ onOpenChange }: { onOpenChange: (open: boolean) => void }) {
   const { budgetCap, setBudgetCap, budgets } = useStore();
   const { t } = useTranslation();
 
@@ -34,10 +44,6 @@ export function BudgetCapDialog({ open, onOpenChange }: BudgetCapDialogProps) {
     .reduce((s, b) => s + b.limit_amount, 0);
 
   const [amount, setAmount] = useState<string>(budgetCap ? String(budgetCap) : "");
-
-  useEffect(() => {
-    if (open) setAmount(budgetCap ? String(budgetCap) : "");
-  }, [open, budgetCap]);
 
   const num = parseFloat(amount);
   const tooLow = !!num && num < minRequired;
@@ -55,57 +61,55 @@ export function BudgetCapDialog({ open, onOpenChange }: BudgetCapDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("cap.title")}</DialogTitle>
-          <DialogDescription>{t("cap.desc")}</DialogDescription>
-        </DialogHeader>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{t("cap.title")}</DialogTitle>
+        <DialogDescription>{t("cap.desc")}</DialogDescription>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="cap-amount">{t("cap.amount")}</Label>
-            <CurrencyInput
-              id="cap-amount"
-              value={amount}
-              onValueChange={setAmount}
-              placeholder="5.000.000"
-              required
-              autoFocus
-            />
-            {minRequired > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {t("cap.minHint", { amount: formatRupiah(minRequired) })}
-              </p>
-            )}
-            {tooLow && (
-              <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{t("cap.tooLow", { amount: formatRupiah(minRequired) })}</span>
-              </div>
-            )}
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="cap-amount">{t("cap.amount")}</Label>
+          <CurrencyInput
+            id="cap-amount"
+            value={amount}
+            onValueChange={setAmount}
+            placeholder="5.000.000"
+            required
+            autoFocus
+          />
+          {minRequired > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {t("cap.minHint", { amount: formatRupiah(minRequired) })}
+            </p>
+          )}
+          {tooLow && (
+            <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{t("cap.tooLow", { amount: formatRupiah(minRequired) })}</span>
+            </div>
+          )}
+        </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            {budgetCap !== null && (
-              <Button
-                type="button"
-                variant="ghost"
-                className="text-muted-foreground hover:text-destructive mr-auto"
-                onClick={handleRemove}
-              >
-                {t("cap.remove")}
-              </Button>
-            )}
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {t("common.cancel")}
+        <DialogFooter className="gap-2 sm:gap-0">
+          {budgetCap !== null && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-muted-foreground hover:text-destructive mr-auto"
+              onClick={handleRemove}
+            >
+              {t("cap.remove")}
             </Button>
-            <Button type="submit" disabled={!num || tooLow}>
-              {t("common.save")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          )}
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" disabled={!num || tooLow}>
+            {t("common.save")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -50,11 +50,17 @@ const COLOR_OPTIONS = [
   "bg-orange-500",
 ];
 
-export function WalletDialog({
-  open,
-  onOpenChange,
-  initial,
-}: WalletDialogProps) {
+export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <WalletForm onOpenChange={onOpenChange} initial={initial} />}
+    </Dialog>
+  );
+}
+
+function WalletForm({ onOpenChange, initial }: Omit<WalletDialogProps, "open">) {
   const { addWallet, updateWallet } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial;
@@ -65,15 +71,6 @@ export function WalletDialog({
     initial?.balance ? String(initial.balance) : "0",
   );
   const [color, setColor] = useState(initial?.color || COLOR_OPTIONS[0]);
-
-  useEffect(() => {
-    if (open) {
-      setName(initial?.name || "");
-      setType(initial?.type || "cash");
-      setBalance(initial?.balance ? String(initial.balance) : "0");
-      setColor(initial?.color || COLOR_OPTIONS[0]);
-    }
-  }, [open, initial]);
 
   const icon = WALLET_TYPES.find((t) => t.value === type)?.icon || "💵";
 
@@ -97,8 +94,7 @@ export function WalletDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("walletDlg.title.edit") : t("walletDlg.title.add")}</DialogTitle>
           <DialogDescription>{t("walletDlg.desc")}</DialogDescription>
@@ -183,7 +179,6 @@ export function WalletDialog({
             <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

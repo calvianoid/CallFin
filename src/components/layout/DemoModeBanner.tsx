@@ -1,10 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { AlertCircle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const DISMISSED_KEY = "callfin.demoBannerDismissed";
+
+// sessionStorage never notifies same-tab changes; re-renders after dismiss()
+// come from the local state update below.
+const emptySubscribe = () => () => {};
 
 /**
  * Banner that appears when the app is running in "demo mode" — i.e. Supabase
@@ -16,23 +20,20 @@ export function DemoModeBanner() {
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-  const [dismissed, setDismissed] = useState(true); // hide until we know
+  // Reads session (not local) storage so the banner re-shows after reload.
+  // On the server there's no storage — treat as dismissed to avoid a flash.
+  const dismissedInSession = useSyncExternalStore(
+    emptySubscribe,
+    () => sessionStorage.getItem(DISMISSED_KEY) === "1",
+    () => true,
+  );
+  const [dismissedNow, setDismissedNow] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!isDemoMode) {
-      setDismissed(true);
-      return;
-    }
-    // Allow re-show after page reload by reading from session, not local, storage
-    setDismissed(sessionStorage.getItem(DISMISSED_KEY) === "1");
-  }, [isDemoMode]);
-
-  if (!isDemoMode || dismissed) return null;
+  if (!isDemoMode || dismissedInSession || dismissedNow) return null;
 
   function dismiss() {
     sessionStorage.setItem(DISMISSED_KEY, "1");
-    setDismissed(true);
+    setDismissedNow(true);
   }
 
   return (

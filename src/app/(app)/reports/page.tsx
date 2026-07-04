@@ -13,7 +13,6 @@ import { useTranslation } from "@/lib/i18n/context";
 import {
   Download, TrendingUp, TrendingDown, Sparkles, PiggyBank,
   Calendar, Activity, Receipt, ArrowUpRight, ArrowDownRight,
-  Wallet as WalletIcon,
 } from "lucide-react";
 import { cn, getYearMonth } from "@/lib/utils";
 import {
@@ -720,7 +719,7 @@ export default function ReportsPage() {
             <CardTitle className="text-sm">{t("reports.incomeByCategory")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {stats.incomeBreakdown.map((c, i) => {
+            {stats.incomeBreakdown.map((c) => {
               const pct = (c.amount / stats.totalIncome) * 100;
               return (
                 <div key={c.category} className="flex items-center gap-3">

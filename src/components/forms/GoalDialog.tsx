@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,23 @@ interface GoalDialogProps {
 }
 
 export function GoalDialog({ open, onOpenChange, initial, defaultName, defaultTarget }: GoalDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && (
+        <GoalForm
+          onOpenChange={onOpenChange}
+          initial={initial}
+          defaultName={defaultName}
+          defaultTarget={defaultTarget}
+        />
+      )}
+    </Dialog>
+  );
+}
+
+function GoalForm({ onOpenChange, initial, defaultName, defaultTarget }: Omit<GoalDialogProps, "open">) {
   const { addGoal, updateGoal } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial;
@@ -41,19 +58,6 @@ export function GoalDialog({ open, onOpenChange, initial, defaultName, defaultTa
   const [deadline, setDeadline] = useState(
     initial?.deadline?.slice(0, 10) || "",
   );
-
-  useEffect(() => {
-    if (open) {
-      setName(initial?.goal_name || defaultName || "");
-      setTarget(
-        initial?.target_amount ? String(initial.target_amount) : defaultTarget ? String(defaultTarget) : "",
-      );
-      setCurrent(
-        initial?.current_amount ? String(initial.current_amount) : "0",
-      );
-      setDeadline(initial?.deadline?.slice(0, 10) || "");
-    }
-  }, [open, initial, defaultName, defaultTarget]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,8 +81,7 @@ export function GoalDialog({ open, onOpenChange, initial, defaultName, defaultTa
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? t("goalDlg.title.edit") : t("goalDlg.title.add")}
@@ -145,7 +148,6 @@ export function GoalDialog({ open, onOpenChange, initial, defaultName, defaultTa
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

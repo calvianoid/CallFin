@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,16 @@ interface CategoryDialogProps {
 const COMMON_EMOJIS = ["📌", "💼", "🏠", "🚗", "🍔", "🎬", "🛍️", "🏥", "📚", "✈️", "🎁", "💻", "🎮", "☕", "🐶", "💰", "📈", "🏋️", "🧾", "🎵"];
 
 export function CategoryDialog({ open, onOpenChange, initial, defaultType }: CategoryDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <CategoryForm onOpenChange={onOpenChange} initial={initial} defaultType={defaultType} />}
+    </Dialog>
+  );
+}
+
+function CategoryForm({ onOpenChange, initial, defaultType }: Omit<CategoryDialogProps, "open">) {
   const { categories, addCategory, updateCategory } = useStore();
   const { t, locale } = useTranslation();
   const isEdit = !!initial;
@@ -32,16 +42,6 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
   const [color, setColor] = useState(initial?.color || CATEGORY_COLOR_OPTIONS[0]);
   const [icon, setIcon] = useState(initial?.icon || "📌");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setName(initial?.name || "");
-      setType(initial?.type || defaultType || "expense");
-      setColor(initial?.color || CATEGORY_COLOR_OPTIONS[0]);
-      setIcon(initial?.icon || "📌");
-      setError(null);
-    }
-  }, [open, initial, defaultType]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,8 +71,7 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("catDlg.title.edit") : t("catDlg.title.add")}</DialogTitle>
           <DialogDescription>{t("catDlg.desc")}</DialogDescription>
@@ -162,7 +161,6 @@ export function CategoryDialog({ open, onOpenChange, initial, defaultType }: Cat
             <Button type="submit">{isEdit ? t("common.save") : t("common.add")}</Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

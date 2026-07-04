@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Budget } from "@/types";
 import { useStore } from "@/lib/store";
@@ -34,11 +26,23 @@ interface BudgetDialogProps {
   initial?: Budget;
 }
 
-export function BudgetDialog({
-  open,
+export function BudgetDialog({ open, onOpenChange, initial }: BudgetDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <BudgetForm onOpenChange={onOpenChange} initial={initial} />}
+    </Dialog>
+  );
+}
+
+function BudgetForm({
   onOpenChange,
   initial,
-}: BudgetDialogProps) {
+}: {
+  onOpenChange: (open: boolean) => void;
+  initial?: Budget;
+}) {
   const { addBudget, updateBudget, budgets, categories, budgetCap } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial;
@@ -70,14 +74,6 @@ export function BudgetDialog({
   const [limit, setLimit] = useState<string>(
     initial?.limit_amount ? String(initial.limit_amount) : "",
   );
-
-  useEffect(() => {
-    if (open) {
-      setCategory(initial?.category || firstAvailable);
-      setLimit(initial?.limit_amount ? String(initial.limit_amount) : "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial]);
 
   const allUsed =
     !isEdit &&
@@ -121,76 +117,74 @@ export function BudgetDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? t("budgetDlg.title.edit") : t("budgetDlg.title.add")}</DialogTitle>
-          <DialogDescription>{t("budgetDlg.desc")}</DialogDescription>
-        </DialogHeader>
+    <DialogContent className="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>{isEdit ? t("budgetDlg.title.edit") : t("budgetDlg.title.add")}</DialogTitle>
+        <DialogDescription>{t("budgetDlg.desc")}</DialogDescription>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>{t("tx.col.category")}</Label>
-            <Combobox
-              value={category}
-              onValueChange={setCategory}
-              items={expenseCategories
-                .filter((c) => !usedCategories.has(c.name))
-                .map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
-              placeholder={t("common.pickCategory")}
-              searchPlaceholder={t("common.searchCategory")}
-              emptyMessage={t("budgetDlg.noCategoryLeft")}
-              disabled={isEdit || allUsed}
-              triggerClassName="w-full"
-            />
-            {isEdit && (
-              <p className="text-xs text-muted-foreground">{t("budgetDlg.lockedCategory")}</p>
-            )}
-            {allUsed && (
-              <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{t("budgetDlg.allUsed")}</span>
-              </div>
-            )}
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label>{t("tx.col.category")}</Label>
+          <Combobox
+            value={category}
+            onValueChange={setCategory}
+            items={expenseCategories
+              .filter((c) => !usedCategories.has(c.name))
+              .map<ComboboxItem>((c) => ({ value: c.name, label: c.name, icon: c.icon }))}
+            placeholder={t("common.pickCategory")}
+            searchPlaceholder={t("common.searchCategory")}
+            emptyMessage={t("budgetDlg.noCategoryLeft")}
+            disabled={isEdit || allUsed}
+            triggerClassName="w-full"
+          />
+          {isEdit && (
+            <p className="text-xs text-muted-foreground">{t("budgetDlg.lockedCategory")}</p>
+          )}
+          {allUsed && (
+            <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{t("budgetDlg.allUsed")}</span>
+            </div>
+          )}
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="limit">{t("budgetDlg.limit")}</Label>
-            <CurrencyInput
-              id="limit"
-              value={limit}
-              onValueChange={setLimit}
-              placeholder="1.500.000"
-              required
-              autoFocus
-            />
-            {budgetCap !== null && !overCap && (
-              <p className="text-xs text-muted-foreground">
-                {t("budgetDlg.capRemaining", { amount: formatRupiah(Math.max(capRemaining, 0)) })}
-              </p>
-            )}
-            {overCap && (
-              <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
-                <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                <span>{t("budgetDlg.overCap", { amount: formatRupiah(Math.max(capRemaining, 0)) })}</span>
-              </div>
-            )}
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="limit">{t("budgetDlg.limit")}</Label>
+          <CurrencyInput
+            id="limit"
+            value={limit}
+            onValueChange={setLimit}
+            placeholder="1.500.000"
+            required
+            autoFocus
+          />
+          {budgetCap !== null && !overCap && (
+            <p className="text-xs text-muted-foreground">
+              {t("budgetDlg.capRemaining", { amount: formatRupiah(Math.max(capRemaining, 0)) })}
+            </p>
+          )}
+          {overCap && (
+            <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>{t("budgetDlg.overCap", { amount: formatRupiah(Math.max(capRemaining, 0)) })}</span>
+            </div>
+          )}
+        </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button type="submit" disabled={overCap || (!isEdit && allUsed)}>
-              {isEdit ? t("common.saveChanges") : t("budgetDlg.title.add")}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        <DialogFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+          >
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" disabled={overCap || (!isEdit && allUsed)}>
+            {isEdit ? t("common.saveChanges") : t("budgetDlg.title.add")}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }

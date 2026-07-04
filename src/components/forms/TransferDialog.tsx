@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -29,40 +29,39 @@ interface TransferDialogProps {
   onSaved?: () => void;
 }
 
-export function TransferDialog({
-  open,
+export function TransferDialog({ open, onOpenChange, ...formProps }: TransferDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <TransferForm onOpenChange={onOpenChange} {...formProps} />}
+    </Dialog>
+  );
+}
+
+function TransferForm({
   onOpenChange,
   defaultFromId,
   defaultToId,
   defaultAmount,
   fromAI,
   onSaved,
-}: TransferDialogProps) {
+}: Omit<TransferDialogProps, "open">) {
   const { wallets, addTransfer } = useStore();
   const { t } = useTranslation();
 
   const [fromId, setFromId] = useState(defaultFromId || wallets[0]?.id || "");
-  const [toId, setToId] = useState(defaultToId || wallets[1]?.id || "");
+  // Default destination: first wallet that's NOT the source
+  const [toId, setToId] = useState(
+    defaultToId ||
+      wallets.find((w) => w.id !== (defaultFromId || wallets[0]?.id))?.id ||
+      "",
+  );
   const [amount, setAmount] = useState<string>(
     defaultAmount ? String(defaultAmount) : "",
   );
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (open) {
-      setFromId(defaultFromId || wallets[0]?.id || "");
-      // Default destination: first wallet that's NOT the source
-      const otherId =
-        defaultToId ||
-        wallets.find((w) => w.id !== (defaultFromId || wallets[0]?.id))?.id ||
-        "";
-      setToId(otherId);
-      setAmount(defaultAmount ? String(defaultAmount) : "");
-      setNote("");
-      setError(null);
-    }
-  }, [open, defaultFromId, defaultToId, defaultAmount, wallets]);
 
   const fromWallet = wallets.find((w) => w.id === fromId);
   const toWallet = wallets.find((w) => w.id === toId);
@@ -89,8 +88,7 @@ export function TransferDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI ? (
@@ -227,7 +225,6 @@ export function TransferDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

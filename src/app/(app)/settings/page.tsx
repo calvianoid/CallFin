@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,16 @@ import { getSupabaseBrowser } from "@/lib/supabase/browser-client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { ChangePasswordForm } from "@/components/settings/ChangePasswordForm";
 
+// next-themes only knows the resolved theme on the client; this replaces the
+// old `useEffect(() => setMounted(true), [])` dance without a setState-in-effect.
+const emptySubscribe = () => () => {};
+
 export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { t, locale, setLocale } = useTranslation();
   const { profile: storeProfile, updateProfile, isHydrating } = useStore();
   const { showFreedom, setShowFreedom } = usePreferences();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   // Local form state mirrors the store profile so user can edit before saving.
   const [profile, setProfile] = useState({
@@ -37,8 +39,12 @@ export default function SettingsPage() {
     phone: storeProfile?.phone || "",
   });
 
-  // Sync when store profile loads/changes (e.g. after Supabase hydration)
-  useEffect(() => {
+  // Sync when the store profile loads/changes (e.g. after Supabase hydration).
+  // Render-time previous-value comparison — the React-docs replacement for the
+  // old sync effect ("storing information from previous renders").
+  const [syncedProfile, setSyncedProfile] = useState(storeProfile);
+  if (storeProfile !== syncedProfile) {
+    setSyncedProfile(storeProfile);
     if (storeProfile) {
       setProfile({
         fullName: storeProfile.full_name,
@@ -46,7 +52,7 @@ export default function SettingsPage() {
         phone: storeProfile.phone || "",
       });
     }
-  }, [storeProfile]);
+  }
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const fileInputRef = useRef<HTMLInputElement>(null);

@@ -6,7 +6,6 @@ import {
   useState,
   useCallback,
   useEffect,
-  useRef,
   ReactNode,
 } from "react";
 import { Transaction, Budget, Goal, Wallet, Category } from "@/types";
@@ -429,7 +428,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const updateTransaction = useCallback(
     (id: string, patch: Partial<Omit<Transaction, "id" | "user_id">>) => {
-      const old = transactionsRef.current.find((t) => t.id === id);
+      const old = transactions.find((t) => t.id === id);
       if (!old) return;
 
       // Only allow editing plain income/expense — transfer & goal contribution
@@ -505,19 +504,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           );
       }
     },
-    [],
+    [transactions],
   );
 
-  // We need the latest transactions to look up the tx being deleted without
-  // putting the lookup inside a setState updater (React StrictMode would call
-  // the updater twice in dev, double-firing every side effect inside).
-  const transactionsRef = useRef(transactions);
-  useEffect(() => {
-    transactionsRef.current = transactions;
-  }, [transactions]);
-
+  // The tx lookup reads `transactions` from the closure (with it in the deps)
+  // rather than inside a setState updater — React StrictMode calls updaters
+  // twice in dev, which would double-fire every side effect inside.
   const deleteTransaction = useCallback((id: string) => {
-    const tx = transactionsRef.current.find((t) => t.id === id);
+    const tx = transactions.find((t) => t.id === id);
     if (!tx) return;
 
     // 1. Drop the tx from the list — this updater is pure, safe under StrictMode.
@@ -569,7 +563,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           console.error("[store] deleteTransaction failed:", err),
         );
     }
-  }, []);
+  }, [transactions]);
 
   const addBudget = useCallback((b: Omit<Budget, "id" | "user_id">) => {
     const tempId = makeId();

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useSyncExternalStore } from "react";
 import { Locale, TRANSLATIONS, TranslationKey } from "./translations";
 
 interface I18nContextValue {
@@ -15,28 +15,34 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 const STORAGE_KEY = "callfin.locale";
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("id");
-  const [ready, setReady] = useState(false);
+// localStorage never notifies same-tab changes; re-renders after setLocale()
+// come from the override state below.
+const emptySubscribe = () => () => {};
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === "id" || saved === "en") {
-        setLocaleState(saved);
-      } else {
+export function LocaleProvider({ children }: { children: ReactNode }) {
+  // Server snapshot: "id" (matches the SSR markup). Client snapshot: the
+  // saved choice, falling back to the browser language.
+  const detectedLocale = useSyncExternalStore<Locale>(
+    emptySubscribe,
+    () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved === "id" || saved === "en") return saved;
         const nav = typeof navigator !== "undefined" ? navigator.language.toLowerCase() : "id";
-        setLocaleState(nav.startsWith("en") ? "en" : "id");
+        return nav.startsWith("en") ? "en" : "id";
+      } catch {
+        return "id";
       }
-    } catch {
-      // ignore
-    } finally {
-      setReady(true);
-    }
-  }, []);
+    },
+    () => "id",
+  );
+  const ready = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [override, setOverride] = useState<Locale | null>(null);
+
+  const locale = override ?? detectedLocale;
 
   const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l);
+    setOverride(l);
     try {
       localStorage.setItem(STORAGE_KEY, l);
       document.documentElement.lang = l;

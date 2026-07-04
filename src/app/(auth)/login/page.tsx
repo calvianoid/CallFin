@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,34 +21,29 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useTranslation();
-  const [email, setEmail] = useState("");
+  // After register with email-confirmation-required, register page redirects
+  // here with ?confirm=<email> — show a friendly hint instead of an error.
+  // These come straight from the URL, so they're derived at render (email is
+  // just seeded once via the state initializer, still editable after).
+  const confirmEmail = searchParams.get("confirm");
+  const [email, setEmail] = useState(confirmEmail ?? "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
-  // After register with email-confirmation-required, register page redirects here
-  // with ?confirm=<email> — show a friendly hint instead of an error.
-  useEffect(() => {
-    const confirm = searchParams.get("confirm");
-    if (confirm) {
-      setEmail(confirm);
-      setInfo(t("auth.signInConfirmed", { email: confirm }));
-      return;
-    }
-    if (searchParams.get("reset") === "success") {
-      setInfo(t("auth.resetSuccess"));
-      return;
-    }
-    if (searchParams.get("error") === "callback") {
-      setError(t("auth.callbackError"));
-    }
-  }, [searchParams, t]);
+  const info = confirmEmail
+    ? t("auth.signInConfirmed", { email: confirmEmail })
+    : searchParams.get("reset") === "success"
+      ? t("auth.resetSuccess")
+      : "";
+  const urlError =
+    !info && searchParams.get("error") === "callback" ? t("auth.callbackError") : "";
+  const error = submitError || urlError;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setSubmitError("");
 
     try {
       // Try real Supabase auth via server action. If not configured, it'll throw
@@ -59,7 +54,7 @@ function LoginForm() {
       fd.set("password", password);
       const res = await signIn(fd);
       if (res && "error" in res && res.error) {
-        setError(res.error);
+        setSubmitError(res.error);
         return;
       }
       // signIn redirects to / on success — fallback router push if not configured
