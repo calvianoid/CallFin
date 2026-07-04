@@ -94,6 +94,7 @@ export const TRANSLATIONS = {
     "wallets.type.bank": "Bank",
     "wallets.type.ewallet": "E-Wallet",
     "wallets.type.credit": "Kartu Kredit",
+    "wallets.negative": "Minus",
 
     // Transactions
     "tx.title": "Semua Transaksi",
@@ -116,6 +117,11 @@ export const TRANSLATIONS = {
     "budget.title": "Manajemen Budget",
     "budget.subtitle": "{month} — {n} kategori",
     "budget.add": "Tambah Budget",
+    "budget.copyFromLastMonth": "Salin dari Bulan Lalu",
+    "budget.copying": "Menyalin...",
+    "budget.copySuccess": "{n} kategori disalin dari bulan lalu",
+    "budget.copyEmpty": "Tidak ada kategori baru untuk disalin dari bulan lalu",
+    "budget.copyError": "Gagal menyalin budget bulan lalu",
     "budget.totalCard": "Total Budget Bulan Ini",
     "budget.used": "terpakai",
     "budget.remaining": "Sisa",
@@ -633,6 +639,7 @@ export const TRANSLATIONS = {
     "wallets.type.bank": "Bank",
     "wallets.type.ewallet": "E-Wallet",
     "wallets.type.credit": "Credit Card",
+    "wallets.negative": "Negative",
 
     // Transactions
     "tx.title": "All Transactions",
@@ -655,6 +662,11 @@ export const TRANSLATIONS = {
     "budget.title": "Budget Manager",
     "budget.subtitle": "{month} — {n} categories",
     "budget.add": "Add Budget",
+    "budget.copyFromLastMonth": "Copy from Last Month",
+    "budget.copying": "Copying...",
+    "budget.copySuccess": "Copied {n} categories from last month",
+    "budget.copyEmpty": "No new categories to copy from last month",
+    "budget.copyError": "Failed to copy last month's budgets",
     "budget.totalCard": "This Month's Total Budget",
     "budget.used": "used",
     "budget.remaining": "Remaining",

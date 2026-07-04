@@ -12,24 +12,42 @@ import { BudgetTrendChart } from "@/components/dashboard/BudgetTrendChart";
 import { formatRupiah } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { Budget } from "@/types";
-import { Plus, AlertTriangle, CheckCircle2, TrendingDown, Pencil, Trash2, SlidersHorizontal, ChevronDown, Layers, LineChart } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, AlertTriangle, CheckCircle2, TrendingDown, Pencil, Trash2, SlidersHorizontal, ChevronDown, Layers, LineChart, Copy } from "lucide-react";
+import { cn, getYearMonth } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 import { formatMonthLabel } from "@/components/ui/month-picker";
 import { computeBudgetSpent, computeMonthExpenses, computeOtherCategories } from "@/lib/budget-utils";
 
 export default function BudgetsPage() {
-  const { budgets, deleteBudget, isHydrating, transactions, budgetCap } = useStore();
+  const { budgets, deleteBudget, isHydrating, transactions, budgetCap, copyBudgetsFromMonth } = useStore();
   const { t } = useTranslation();
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = getYearMonth();
+  const now = new Date();
+  const lastMonth = getYearMonth(new Date(now.getFullYear(), now.getMonth() - 1, 1));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [capOpen, setCapOpen] = useState(false);
   const [otherExpanded, setOtherExpanded] = useState(false);
   const [expandedTrend, setExpandedTrend] = useState<string | null>(null);
   const [editing, setEditing] = useState<Budget | undefined>();
+  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "empty" | "error">("idle");
+  const [copiedCount, setCopiedCount] = useState(0);
 
   const monthBudgets = budgets.filter((b) => b.month_year === currentMonth);
   const hasCap = budgetCap !== null;
+
+  async function handleCopyFromLastMonth() {
+    setCopyState("copying");
+    try {
+      const n = await copyBudgetsFromMonth(lastMonth, currentMonth);
+      setCopiedCount(n);
+      setCopyState(n > 0 ? "copied" : "empty");
+    } catch (err) {
+      console.error("[budgets] copyBudgetsFromMonth failed:", err);
+      setCopyState("error");
+    } finally {
+      setTimeout(() => setCopyState("idle"), 3000);
+    }
+  }
 
   // With a cap, the headline total is the cap and "spent" is ALL real expenses
   // this month (budgeted + unbudgeted). Without a cap, fall back to summing the
@@ -64,12 +82,36 @@ export default function BudgetsPage() {
           <h1 className="text-lg sm:text-xl font-bold">{t("budget.title")}</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">{t("budget.subtitle", { month: formatMonthLabel(currentMonth), n: monthBudgets.length })}</p>
         </div>
-        <Button size="sm" className="gap-2 shrink-0" onClick={openAdd}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("budget.add")}</span>
-          <span className="sm:hidden">{t("common.add")}</span>
-        </Button>
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={handleCopyFromLastMonth}
+            disabled={copyState === "copying"}
+          >
+            <Copy className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {copyState === "copying" ? t("budget.copying") : t("budget.copyFromLastMonth")}
+            </span>
+          </Button>
+          <Button size="sm" className="gap-2" onClick={openAdd}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("budget.add")}</span>
+            <span className="sm:hidden">{t("common.add")}</span>
+          </Button>
+        </div>
       </div>
+
+      {copyState === "copied" && (
+        <p className="text-xs text-green-600">{t("budget.copySuccess", { n: copiedCount })}</p>
+      )}
+      {copyState === "empty" && (
+        <p className="text-xs text-muted-foreground">{t("budget.copyEmpty")}</p>
+      )}
+      {copyState === "error" && (
+        <p className="text-xs text-red-500">{t("budget.copyError")}</p>
+      )}
 
       <Card className="border-border/50 bg-primary/5">
         <CardContent className="p-5">

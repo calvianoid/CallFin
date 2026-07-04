@@ -17,6 +17,7 @@ import {
   mockWallets,
   DEFAULT_CATEGORIES,
 } from "./mock-data";
+import { getYearMonth } from "@/lib/utils";
 
 const SUPABASE_READY =
   typeof process !== "undefined" &&
@@ -58,6 +59,13 @@ interface StoreContextValue {
   budgetCap: number | null;
   /** Set (or clear, with null) the current month's total budget cap. */
   setBudgetCap: (amount: number | null) => void;
+  /**
+   * Copy every budget from `sourceMonth` into `targetMonth` as a reusable
+   * template, skipping categories that already exist in the target month.
+   * Also carries over the total cap if the target month doesn't have one yet.
+   * Returns how many category budgets were copied.
+   */
+  copyBudgetsFromMonth: (sourceMonth: string, targetMonth: string) => Promise<number>;
   addGoal: (g: Omit<Goal, "id" | "user_id">) => void;
   updateGoal: (id: string, patch: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
@@ -159,7 +167,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      const thisMonth = new Date().toISOString().slice(0, 7);
+      const thisMonth = getYearMonth();
       const [p, ws, txs, bs, gs, cs, cap] = await Promise.all([
         safe("profile", getProfile, null as unknown as UserProfile | null),
         safe("wallets", listWallets, [] as Wallet[]),
@@ -616,7 +624,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setBudgetCapState(amount);
 
     if (SUPABASE_READY) {
-      const month = new Date().toISOString().slice(0, 7);
+      const month = getYearMonth();
       import("./api/budget-caps")
         .then((m) =>
           amount === null ? m.deleteBudgetCap(month) : m.setBudgetCap(month, amount),
@@ -624,6 +632,41 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         .catch((err) => console.error("[store] setBudgetCap failed:", err));
     }
   }, []);
+
+  const copyBudgetsFromMonth = useCallback(
+    async (sourceMonth: string, targetMonth: string): Promise<number> => {
+      let source: Budget[];
+      let sourceCap: number | null = null;
+
+      if (SUPABASE_READY) {
+        const [{ listBudgets }, { getBudgetCap }] = await Promise.all([
+          import("./api/budgets"),
+          import("./api/budget-caps"),
+        ]);
+        [source, sourceCap] = await Promise.all([
+          listBudgets(sourceMonth),
+          getBudgetCap(sourceMonth),
+        ]);
+      } else {
+        source = budgets.filter((b) => b.month_year === sourceMonth);
+      }
+
+      const existingCategories = new Set(
+        budgets.filter((b) => b.month_year === targetMonth).map((b) => b.category),
+      );
+      const toCopy = source.filter((b) => !existingCategories.has(b.category));
+      toCopy.forEach((b) =>
+        addBudget({ category: b.category, limit_amount: b.limit_amount, month_year: targetMonth }),
+      );
+
+      if (sourceCap !== null && budgetCap === null) {
+        setBudgetCap(sourceCap);
+      }
+
+      return toCopy.length;
+    },
+    [budgets, budgetCap, addBudget, setBudgetCap],
+  );
 
   const addGoal = useCallback((g: Omit<Goal, "id" | "user_id">) => {
     const tempId = makeId();
@@ -739,6 +782,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         deleteBudget,
         budgetCap,
         setBudgetCap,
+        copyBudgetsFromMonth,
         addGoal,
         updateGoal,
         deleteGoal,
