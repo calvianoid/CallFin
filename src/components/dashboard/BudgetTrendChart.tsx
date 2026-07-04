@@ -52,8 +52,8 @@ export function BudgetTrendChart({ budget }: { budget: Budget }) {
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-md bg-muted/40 p-2">
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground leading-tight">{s.label}</p>
+          <div key={s.label} className="rounded-md bg-muted/40 p-2 min-w-0">
+            <p className="text-[10px] uppercase tracking-wide text-muted-foreground leading-tight break-words">{s.label}</p>
             <p className="text-sm font-bold tabular-nums" style={{ color: s.color }}>{s.value}</p>
           </div>
         ))}
