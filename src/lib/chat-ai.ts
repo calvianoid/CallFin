@@ -607,7 +607,56 @@ export function generateDescription(
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function parseTransaction(text: string, walletNames: { id: string; name: string }[]): ParsedTransaction | null {
+/**
+ * Keyword → canonical category name, checked in order. These names match
+ * DEFAULT_CATEGORIES (mock-data.ts); the caller cross-checks against the
+ * user's actual category list so a renamed/deleted default still degrades
+ * gracefully instead of producing a category that doesn't exist anywhere.
+ */
+const EXPENSE_KEYWORD_CATEGORIES: [RegExp, string][] = [
+  [/makan|minum|kopi|cafe|restaurant|warung|nasi|bakso|soto|pizza|burger|food|lunch|dinner|breakfast|brunch|meal|snack|drink|coffee|tea|eat/i, "Food & Drinks"],
+  [/bensin|gas|gasoline|fuel/i, "Fuel"],
+  [/parkir|parking/i, "Parking"],
+  [/grab|gojek|ojek|bis|kereta|transjakarta|toll|taxi|uber|bus|train|ride/i, "Transportation"],
+  [/listrik|electricity/i, "Electricity Bill"],
+  [/\bair\b|pdam|water\s*bill/i, "Water Bill"],
+  [/internet|wifi/i, "Internet Bill"],
+  [/pulsa|phone\s*bill|mobile\s*bill/i, "Phone & Mobile"],
+  [/baju|sepatu|clothing|clothes|shoes/i, "Clothing & Accessories"],
+  [/belanja|mall|tokopedia|shopee|lazada|shop|shopping|amazon|cart/i, "Shopping"],
+  [/bioskop|nonton|netflix|spotify|movie|cinema|concert|entertainment|streaming/i, "Entertainment"],
+  [/\bgame\b|gaming/i, "Games"],
+  [/dokter|obat|rumah\s*sakit|healthcare|hospital|doctor|medicine/i, "Healthcare"],
+  [/invest|investasi|saham|reksadana/i, "Investment"],
+];
+
+const INCOME_KEYWORD_CATEGORIES: [RegExp, string][] = [
+  [/gaji|salary|paycheck|payroll/i, "Salary"],
+  [/freelance|proyek|project|gig|side\s+hustle|client/i, "Freelance"],
+  [/bonus|thr/i, "Bonus"],
+];
+
+/** Case-insensitive lookup of a canonical name against the user's real categories. */
+function resolveCategory(
+  candidate: string | null,
+  type: "income" | "expense",
+  categories: { name: string; type: string }[],
+): string {
+  const ofType = categories.filter((c) => c.type === type);
+  if (candidate) {
+    const match = ofType.find((c) => c.name.toLowerCase() === candidate.toLowerCase());
+    if (match) return match.name;
+  }
+  const other = ofType.find((c) => c.name.toLowerCase().startsWith("other"));
+  if (other) return other.name;
+  return ofType[0]?.name ?? (type === "income" ? "Other Income" : "Other Expense");
+}
+
+export function parseTransaction(
+  text: string,
+  walletNames: { id: string; name: string }[],
+  categories: { name: string; type: string }[] = [],
+): ParsedTransaction | null {
   if (isQuestion(text)) return null;
 
   const lower = text.toLowerCase();
@@ -617,21 +666,9 @@ export function parseTransaction(text: string, walletNames: { id: string; name: 
   const isIncome = /gaji|pemasukan|dapat|terima|bonus|freelance|untung|income|salary|earned|received|got\s+paid|paycheck/i.test(lower);
   const type = isIncome ? "income" : "expense";
 
-  let category = "Lainnya";
-  // Food (ID + EN)
-  if (/makan|minum|kopi|cafe|restaurant|warung|nasi|bakso|soto|pizza|burger|food|lunch|dinner|breakfast|brunch|meal|snack|drink|coffee|tea|eat/i.test(lower)) category = "Makanan";
-  // Transport
-  else if (/bensin|parkir|grab|gojek|ojek|bis|kereta|transjakarta|toll|gas|gasoline|fuel|taxi|uber|bus|train|parking|ride/i.test(lower)) category = "Transportasi";
-  // Bills
-  else if (/listrik|air|pdam|internet|wifi|pulsa|tagihan|electricity|water|phone|bill|utility|utilities/i.test(lower)) category = "Tagihan";
-  // Shopping
-  else if (/belanja|baju|sepatu|mall|tokopedia|shopee|lazada|shop|shopping|clothing|clothes|shoes|amazon|cart/i.test(lower)) category = "Belanja";
-  // Entertainment
-  else if (/bioskop|nonton|game|hiburan|netflix|spotify|movie|cinema|concert|entertainment|streaming/i.test(lower)) category = "Hiburan";
-  // Salary
-  else if (/gaji|salary|paycheck|payroll/i.test(lower)) category = "Gaji";
-  // Freelance
-  else if (/freelance|proyek|project|gig|side\s+hustle|client/i.test(lower)) category = "Freelance";
+  const keywordList = type === "income" ? INCOME_KEYWORD_CATEGORIES : EXPENSE_KEYWORD_CATEGORIES;
+  const matched = keywordList.find(([re]) => re.test(lower));
+  const category = resolveCategory(matched ? matched[1] : null, type, categories);
 
   let wallet_id: string | undefined;
   for (const w of walletNames) {

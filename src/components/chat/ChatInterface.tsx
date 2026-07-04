@@ -180,7 +180,11 @@ export function ChatInterface() {
     }
 
     // 3. Then regular transaction
-    const parsed = parseTransaction(text, walletNames);
+    const parsed = parseTransaction(
+      text,
+      walletNames,
+      categories.filter((c) => !c.isInternal).map((c) => ({ name: c.name, type: c.type })),
+    );
     if (parsed) {
       // Ask the AI to polish the description (with regex fallback baked into the endpoint).
       // Worst case the network fails — keep the regex-cleaned description from parseTransaction.
