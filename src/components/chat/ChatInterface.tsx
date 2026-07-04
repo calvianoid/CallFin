@@ -17,6 +17,7 @@ import { useStore } from "@/lib/store";
 import { parseTransaction, parseGoalContribution, parseTransfer, answerQuery, isQuestion, ParsedGoalContribution, ParsedTransfer } from "@/lib/chat-ai";
 import { GoalContributionDialog } from "@/components/forms/GoalContributionDialog";
 import { useTranslation } from "@/lib/i18n/context";
+import { getLocalDate } from "@/lib/utils";
 
 /** Shape returned by /api/parse-message (Claude). Mirrors the route's zod schema. */
 type AIIntent = {
@@ -48,28 +49,30 @@ type Message =
   | { id: string; kind: "confirm_goal"; parsed: ParsedGoalContribution; status: "pending" | "confirmed" | "cancelled" }
   | { id: string; kind: "confirm_transfer"; parsed: ParsedTransfer; status: "pending" | "confirmed" | "cancelled" };
 
+let msgSeq = 0;
+/** Unique message id. Lives outside the component so the compiler treats it
+ *  as an opaque helper (same pattern as store.tsx's makeId), and the sequence
+ *  survives same-millisecond bursts that used to collide with Date.now(). */
+function makeMsgId() {
+  return `msg-${Date.now().toString(36)}-${++msgSeq}`;
+}
+
 export function ChatInterface() {
   const { wallets, addTransaction, addGoalContribution, addTransfer, transactions, budgets, goals, categories } = useStore();
   const { t, locale } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([
+  // The welcome bubble is NOT stored in state — it's prepended at render, so
+  // it always follows the active language without needing a sync effect.
+  const [messages, setMessages] = useState<Message[]>([]);
+  const displayMessages: Message[] = [
     { id: "welcome", kind: "text", role: "assistant", content: t("chat.welcome") },
-  ]);
+    ...messages,
+  ];
   const quickPrompts = [t("chat.quick1"), t("chat.quick2"), t("chat.quick3"), t("chat.quick4")];
 
   // Guards against a confirm card being acted on twice (e.g. an impatient
   // double-tap before React re-renders the card away) — which would otherwise
   // create duplicate transactions/transfers/contributions.
   const handledRef = useRef<Set<string>>(new Set());
-
-  // Keep the welcome message in sync with the active language (only if untouched).
-  useEffect(() => {
-    setMessages((prev) =>
-      prev.length === 1 && prev[0].id === "welcome"
-        ? [{ id: "welcome", kind: "text", role: "assistant", content: t("chat.welcome") }]
-        : prev,
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [editDialog, setEditDialog] = useState<{ open: boolean; parsed?: ParsedTransaction; msgId?: string }>({ open: false });
@@ -85,7 +88,7 @@ export function ChatInterface() {
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
 
-    const userMsg: Message = { id: Date.now().toString(), kind: "text", role: "user", content: text };
+    const userMsg: Message = { id: makeMsgId(), kind: "text", role: "user", content: text };
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setLoading(true);
@@ -93,7 +96,7 @@ export function ChatInterface() {
     // Questions are answered from real store data — no transaction is recorded.
     if (isQuestion(text)) {
       const reply = answerQuery(text, { transactions, wallets, budgets, goals }, locale);
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "text", role: "assistant", content: reply }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "text", role: "assistant", content: reply }]);
       setLoading(false);
       return;
     }
@@ -103,7 +106,7 @@ export function ChatInterface() {
     const ai = await aiParse({
       text,
       locale,
-      today: new Date().toISOString().slice(0, 10),
+      today: getLocalDate(),
       wallets: wallets.map((w) => ({ id: w.id, name: w.name })),
       goals: goals.map((g) => ({ id: g.id, name: g.goal_name })),
       categories: categories.filter((c) => !c.isInternal).map((c) => ({ name: c.name, type: c.type })),
@@ -121,7 +124,7 @@ export function ChatInterface() {
           to_name: toW.name,
           amount: ai.transfer.amount,
         };
-        setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_transfer", parsed, status: "pending" }]);
+        setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm_transfer", parsed, status: "pending" }]);
         setLoading(false);
         return;
       }
@@ -138,7 +141,7 @@ export function ChatInterface() {
           amount: ai.goal_contribution.amount,
           wallet_id: wallet.id,
         };
-        setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_goal", parsed, status: "pending" }]);
+        setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm_goal", parsed, status: "pending" }]);
         setLoading(false);
         return;
       }
@@ -155,7 +158,7 @@ export function ChatInterface() {
         date: t.date,
         wallet_id,
       };
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm", parsed, status: "pending" }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm", parsed, status: "pending" }]);
       setLoading(false);
       return;
     }
@@ -166,7 +169,7 @@ export function ChatInterface() {
     // 1. Try transfer first (very specific: mentions transfer + 2 wallets)
     const transfer = parseTransfer(text, walletNames);
     if (transfer) {
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_transfer", parsed: transfer, status: "pending" }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm_transfer", parsed: transfer, status: "pending" }]);
       setLoading(false);
       return;
     }
@@ -174,7 +177,7 @@ export function ChatInterface() {
     // 2. Then goal contribution
     const goalContrib = parseGoalContribution(text, goals, walletNames);
     if (goalContrib) {
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm_goal", parsed: goalContrib, status: "pending" }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm_goal", parsed: goalContrib, status: "pending" }]);
       setLoading(false);
       return;
     }
@@ -209,10 +212,10 @@ export function ChatInterface() {
       } catch {
         // ignore — keep regex-cleaned description
       }
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "confirm", parsed, status: "pending" }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "confirm", parsed, status: "pending" }]);
     } else {
       const reply = answerQuery(text, { transactions, wallets, budgets, goals }, locale);
-      setMessages((m) => [...m, { id: (Date.now() + 1).toString(), kind: "text", role: "assistant", content: reply }]);
+      setMessages((m) => [...m, { id: makeMsgId(), kind: "text", role: "assistant", content: reply }]);
     }
     setLoading(false);
   }
@@ -231,7 +234,7 @@ export function ChatInterface() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: makeMsgId(),
         kind: "text",
         role: "assistant",
         content: t("chat.reply.confirmedGoal", {
@@ -250,7 +253,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.cancelledGoal") },
+      { id: makeMsgId(), kind: "text", role: "assistant", content: t("chat.reply.cancelledGoal") },
     ]);
   }
 
@@ -264,7 +267,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.savedGoal") },
+      { id: makeMsgId(), kind: "text", role: "assistant", content: t("chat.reply.savedGoal") },
     ]);
   }
 
@@ -283,7 +286,7 @@ export function ChatInterface() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: makeMsgId(),
         kind: "text",
         role: "assistant",
         content: t("chat.reply.confirmedTransfer", {
@@ -303,7 +306,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.cancelledTransfer") },
+      { id: makeMsgId(), kind: "text", role: "assistant", content: t("chat.reply.cancelledTransfer") },
     ]);
   }
 
@@ -317,7 +320,7 @@ export function ChatInterface() {
     );
     setMessages((prev) => [
       ...prev,
-      { id: Date.now().toString(), kind: "text", role: "assistant", content: t("chat.reply.savedTransfer") },
+      { id: makeMsgId(), kind: "text", role: "assistant", content: t("chat.reply.savedTransfer") },
     ]);
   }
 
@@ -342,7 +345,7 @@ export function ChatInterface() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: makeMsgId(),
         kind: "text",
         role: "assistant",
         content: t("chat.reply.confirmedTx", {
@@ -363,7 +366,7 @@ export function ChatInterface() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: makeMsgId(),
         kind: "text",
         role: "assistant",
         content: t("chat.reply.cancelledTx"),
@@ -382,7 +385,7 @@ export function ChatInterface() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: makeMsgId(),
         kind: "text",
         role: "assistant",
         content: t("chat.reply.savedTx"),
@@ -421,7 +424,7 @@ export function ChatInterface() {
       {/* Messages */}
       <ScrollArea className="flex-1 min-h-0">
         <div className="py-2">
-          {messages.map((msg) => {
+          {displayMessages.map((msg) => {
             if (msg.kind === "text") {
               return <ChatMessage key={msg.id} role={msg.role} content={msg.content} />;
             }

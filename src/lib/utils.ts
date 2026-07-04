@@ -11,3 +11,8 @@ export function cn(...inputs: ClassValue[]) {
 export function getYearMonth(d: Date = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
 }
+
+// "YYYY-MM-DD" in the local timezone — same UTC pitfall as getYearMonth.
+export function getLocalDate(d: Date = new Date()): string {
+  return `${getYearMonth(d)}-${String(d.getDate()).padStart(2, "0")}`
+}

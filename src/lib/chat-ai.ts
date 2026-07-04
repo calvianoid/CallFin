@@ -1,5 +1,6 @@
 import { Transaction, Budget, Goal, Wallet, ParsedTransaction } from "@/types";
 import { formatRupiah } from "./mock-data";
+import { getLocalDate } from "./utils";
 
 export interface ParsedGoalContribution {
   kind: "goal_contribution";
@@ -695,7 +696,7 @@ export function parseTransaction(
     amount,
     category,
     description,
-    date: new Date().toISOString().split("T")[0],
+    date: getLocalDate(),
     wallet_id,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,18 +13,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction, TransactionType } from "@/types";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
+import { getLocalDate } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 
 interface TransactionDialogProps {
@@ -35,66 +29,59 @@ interface TransactionDialogProps {
   onSaved?: (tx: Transaction) => void;
 }
 
-export function TransactionDialog({
-  open,
+export function TransactionDialog({ open, onOpenChange, ...formProps }: TransactionDialogProps) {
+  // The form only mounts while the dialog is open, so its useState
+  // initializers re-run on every open — no reset effect needed.
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open && <TransactionForm onOpenChange={onOpenChange} {...formProps} />}
+    </Dialog>
+  );
+}
+
+function TransactionForm({
   onOpenChange,
   initial,
   fromAI,
   onSaved,
-}: TransactionDialogProps) {
+}: Omit<TransactionDialogProps, "open">) {
   const { wallets, categories, addTransaction, updateTransaction } = useStore();
   const { t } = useTranslation();
   const isEdit = !!initial?.id;
+
+  const defaultCat = (t: TransactionType) =>
+    categories.find((c) => c.type === t && !c.isInternal)?.name || "";
 
   const [type, setType] = useState<TransactionType>(initial?.type || "expense");
   const [amount, setAmount] = useState<string>(
     initial?.amount ? String(initial.amount) : "",
   );
+  const [category, setCategory] = useState(
+    initial?.category || defaultCat(initial?.type || "expense"),
+  );
+  const [walletId, setWalletId] = useState(() =>
+    // Only use initial wallet_id if it exists in the wallets list
+    initial?.wallet_id && wallets.some((w) => w.id === initial.wallet_id)
+      ? initial.wallet_id
+      : wallets[0]?.id || "",
+  );
+  const [description, setDescription] = useState(initial?.description || "");
+  const [date, setDate] = useState(initial?.date || getLocalDate());
 
   // Categories filtered by current transaction type (no internal categories)
   const availableCategories = categories.filter(
     (c) => c.type === type && !c.isInternal,
   );
-  const defaultCat = (t: TransactionType) =>
-    categories.find((c) => c.type === t && !c.isInternal)?.name || "";
 
-  const [category, setCategory] = useState(
-    initial?.category || defaultCat(initial?.type || "expense"),
-  );
-  const [walletId, setWalletId] = useState(
-    initial?.wallet_id || wallets[0]?.id || "",
-  );
-  const [description, setDescription] = useState(initial?.description || "");
-  const [date, setDate] = useState(
-    initial?.date || new Date().toISOString().split("T")[0],
-  );
-
-  useEffect(() => {
-    if (open) {
-      const initType = initial?.type || "expense";
-      setType(initType);
-      setAmount(initial?.amount ? String(initial.amount) : "");
-      setCategory(initial?.category || defaultCat(initType));
-      // Only use initial wallet_id if it exists in the wallets list
-      const validWalletId =
-        initial?.wallet_id && wallets.some((w) => w.id === initial.wallet_id)
-          ? initial.wallet_id
-          : wallets[0]?.id || "";
-      setWalletId(validWalletId);
-      setDescription(initial?.description || "");
-      setDate(initial?.date || new Date().toISOString().split("T")[0]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initial, wallets]);
-
-  // When user toggles type, reset category to a valid one for the new type
-  useEffect(() => {
-    if (!open) return;
-    if (!availableCategories.some((c) => c.name === category)) {
-      setCategory(availableCategories[0]?.name || "");
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [type, open]);
+  // When the user toggles type, keep the category valid for the new type.
+  function handleTypeChange(v: unknown) {
+    const newType = v as TransactionType;
+    setType(newType);
+    const stillValid = categories.some(
+      (c) => c.type === newType && !c.isInternal && c.name === category,
+    );
+    if (!stillValid) setCategory(defaultCat(newType));
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -128,8 +115,7 @@ export function TransactionDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+    <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI && <Sparkles className="h-4 w-4 text-primary" />}
@@ -149,10 +135,7 @@ export function TransactionDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Tabs
-            value={type}
-            onValueChange={(v) => setType(v as TransactionType)}
-          >
+          <Tabs value={type} onValueChange={handleTypeChange}>
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="expense">{t("txDlg.expense")}</TabsTrigger>
               <TabsTrigger value="income">{t("txDlg.income")}</TabsTrigger>
@@ -236,7 +219,6 @@ export function TransactionDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }
