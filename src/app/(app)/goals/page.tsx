@@ -97,12 +97,7 @@ export default function GoalsPage({ embedded = false }: { embedded?: boolean } =
           return (
             <Card key={g.id} className="border-border/50 overflow-hidden">
               <CardContent className="p-5">
-                <div className="flex items-start gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 shrink-0">
-                    <Target className="h-6 w-6 text-primary" />
-                  </div>
-
-                  <div className="flex-1 space-y-3 min-w-0">
+                <div className="space-y-3 min-w-0">
                     <div className="flex items-center justify-between gap-2">
                       <h3 className="font-semibold text-base truncate">{g.goal_name}</h3>
                       <div className="flex items-center gap-1 shrink-0">
@@ -118,10 +113,10 @@ export default function GoalsPage({ embedded = false }: { embedded?: boolean } =
                     </div>
 
                     <div>
-                      <div className="flex justify-between text-sm mb-1.5">
-                        <span className="text-muted-foreground">{t("goals.progress")}</span>
-                        <span className="font-medium">
-                          {formatRupiah(g.current_amount)} / {formatRupiah(g.target_amount)}
+                      <div className="flex items-baseline justify-between gap-2 text-sm mb-1.5">
+                        <span className="text-muted-foreground shrink-0">{t("goals.progress")}</span>
+                        <span className="font-medium font-num text-right tabular-nums">
+                          {formatRupiah(g.current_amount).replace(/^Rp\s?/, "")} / {formatRupiah(g.target_amount).replace(/^Rp\s?/, "")}
                         </span>
                       </div>
                       <Progress value={pct} className="h-3 [&>div]:bg-primary rounded-full" />
@@ -154,7 +149,6 @@ export default function GoalsPage({ embedded = false }: { embedded?: boolean } =
                       <PiggyBank className="h-3.5 w-3.5" />
                       {pct >= 100 ? t("goals.achieved") : t("goals.contribute")}
                     </Button>
-                  </div>
                 </div>
               </CardContent>
             </Card>

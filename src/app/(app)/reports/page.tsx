@@ -566,7 +566,7 @@ export default function ReportsPage({
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: categoryColor(c.category, i) }} />
                     </div>
                     {diff !== null && Math.abs(diff) >= 5 && (
-                      <span className={cn("text-[10px] font-num shrink-0 w-24 text-right", diff > 0 ? "text-destructive" : "text-positive")}>
+                      <span className={cn("hidden sm:block text-[10px] font-num shrink-0 w-24 text-right", diff > 0 ? "text-destructive" : "text-positive")}>
                         {diff > 0 ? "↑" : "↓"}{Math.abs(diff).toFixed(0)}% vs {formatMonthLabel(prevMonth)}
                       </span>
                     )}
