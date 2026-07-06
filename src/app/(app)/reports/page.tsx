@@ -12,8 +12,9 @@ import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 import {
   Download, TrendingUp, TrendingDown, Sparkles, PiggyBank,
-  Calendar, Activity, Receipt, ArrowUpRight, ArrowDownRight,
+  Calendar, Activity, Receipt, ArrowUpRight, ArrowDownRight, FileSpreadsheet,
 } from "lucide-react";
+import { transactionsToCsv, downloadCsv } from "@/lib/export-csv";
 import { cn, getYearMonth } from "@/lib/utils";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
@@ -482,6 +483,41 @@ export default function ReportsPage({
             </table>
           </>
         )}
+
+        {stats.inMonth.length > 0 && (
+          <>
+            <h2>{locale === "en" ? "Transactions" : "Daftar Transaksi"}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>{locale === "en" ? "Date" : "Tanggal"}</th>
+                  <th>{locale === "en" ? "Description" : "Deskripsi"}</th>
+                  <th>{locale === "en" ? "Category" : "Kategori"}</th>
+                  <th>{locale === "en" ? "Wallet" : "Dompet"}</th>
+                  <th className="num">{locale === "en" ? "Amount" : "Jumlah"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...stats.inMonth]
+                  .sort((a, b) => a.date.localeCompare(b.date))
+                  .map((tx) => {
+                    const w = wallets.find((x) => x.id === tx.wallet_id);
+                    const dest = tx.transfer_to_wallet_id ? wallets.find((x) => x.id === tx.transfer_to_wallet_id) : null;
+                    const sign = tx.type === "income" ? "+" : tx.type === "expense" ? "-" : "";
+                    return (
+                      <tr key={tx.id}>
+                        <td>{tx.date.slice(8, 10)}/{tx.date.slice(5, 7)}</td>
+                        <td>{tx.description?.trim() || (tx.type === "transfer" ? "Transfer" : "—")}</td>
+                        <td>{tx.category}</td>
+                        <td>{w?.name ?? "—"}{dest ? ` → ${dest.name}` : ""}</td>
+                        <td className="num">{sign}{formatRupiah(tx.amount)}</td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
 
       {/* ── On-screen interactive UI (hidden when printing) ── */}
@@ -495,11 +531,27 @@ export default function ReportsPage({
                 {t("reports.subtitle", { month: formatMonthLabel(month) })}
               </p>
             </div>
-            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handlePrint}>
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("reports.export")}</span>
-              <span className="sm:hidden">{t("reports.exportShort")}</span>
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() =>
+                  downloadCsv(
+                    `CallFin — ${t("reports.title")} ${formatMonthLabel(month)}`,
+                    transactionsToCsv(stats.inMonth, wallets),
+                  )
+                }
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("reports.exportCsv")}</span>
+              </Button>
+              <Button variant="outline" size="sm" className="gap-2" onClick={handlePrint}>
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("reports.export")}</span>
+                <span className="sm:hidden">{t("reports.exportShort")}</span>
+              </Button>
+            </div>
           </div>
 
           <div className="no-print">

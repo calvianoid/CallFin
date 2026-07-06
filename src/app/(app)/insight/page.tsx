@@ -15,9 +15,11 @@ import FreedomPage from "@/app/(app)/freedom/page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
-import { Download } from "lucide-react";
+import { Download, FileSpreadsheet } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 import { usePreferences } from "@/lib/preferences";
+import { useStore } from "@/lib/store";
+import { transactionsToCsv, downloadCsv } from "@/lib/export-csv";
 import { getYearMonth } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,7 @@ function InsightInner() {
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const { showFreedom } = usePreferences();
+  const { transactions, wallets } = useStore();
   const [tab, setTab] = useState<Tab>(() =>
     searchParams.get("tab") === "kebebasan" ? "kebebasan" : "ringkasan",
   );
@@ -57,6 +60,23 @@ function InsightInner() {
           {activeTab !== "kebebasan" && (
             <>
               <MonthPicker value={month} onChange={setMonth} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 shrink-0"
+                onClick={() =>
+                  downloadCsv(
+                    `CallFin — ${t("reports.title")} ${formatMonthLabel(month)}`,
+                    transactionsToCsv(
+                      transactions.filter((tx) => tx.date.startsWith(month)),
+                      wallets,
+                    ),
+                  )
+                }
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                <span className="hidden sm:inline">{t("reports.exportCsv")}</span>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
