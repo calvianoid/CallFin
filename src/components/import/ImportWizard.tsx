@@ -230,7 +230,7 @@ export function ImportWizard() {
               <div
                 className={cn(
                   "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 transition-colors",
-                  done && "bg-green-500 text-white",
+                  done && "bg-positive/100 text-white",
                   current && "bg-primary text-primary-foreground ring-2 ring-primary/30",
                   !done && !current && "bg-muted text-muted-foreground",
                 )}
@@ -241,7 +241,7 @@ export function ImportWizard() {
                 {STEP_TITLES[s]}
               </span>
               {i < STEP_ORDER.length - 1 && (
-                <div className={cn("flex-1 h-0.5 mx-1", done ? "bg-green-500" : "bg-muted")} />
+                <div className={cn("flex-1 h-0.5 mx-1", done ? "bg-positive/100" : "bg-muted")} />
               )}
             </div>
           );
@@ -408,7 +408,7 @@ export function ImportWizard() {
                 return (
                   <div key={raw} className="flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-lg border border-border">
                     <span className="text-sm font-medium flex-1 min-w-0 truncate flex items-center gap-1">
-                      {type === "income" ? <TrendingUp className="h-3 w-3 text-green-600 shrink-0" /> : <TrendingDown className="h-3 w-3 text-red-500 shrink-0" />}
+                      {type === "income" ? <TrendingUp className="h-3 w-3 text-positive shrink-0" /> : <TrendingDown className="h-3 w-3 text-destructive shrink-0" />}
                       <span className="truncate">{raw}</span>
                     </span>
                     <ArrowRight className="hidden sm:block h-3 w-3 text-muted-foreground shrink-0" />
@@ -452,32 +452,32 @@ export function ImportWizard() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-positive" />
                     <p className="text-xs text-muted-foreground">Pemasukan</p>
                   </div>
-                  <p className="text-sm font-bold tabular-nums">{summary.income}</p>
-                  <p className="text-xs text-muted-foreground tabular-nums">{formatRupiah(summary.incomeAmount)}</p>
+                  <p className="text-sm font-bold font-num">{summary.income}</p>
+                  <p className="text-xs text-muted-foreground font-num">{formatRupiah(summary.incomeAmount)}</p>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <TrendingDown className="h-4 w-4 text-destructive" />
                     <p className="text-xs text-muted-foreground">Pengeluaran</p>
                   </div>
-                  <p className="text-sm font-bold tabular-nums">{summary.expense}</p>
-                  <p className="text-xs text-muted-foreground tabular-nums">{formatRupiah(summary.expenseAmount)}</p>
+                  <p className="text-sm font-bold font-num">{summary.expense}</p>
+                  <p className="text-xs text-muted-foreground font-num">{formatRupiah(summary.expenseAmount)}</p>
                 </div>
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <ArrowLeftRight className="h-4 w-4 text-sky-600" />
+                    <ArrowLeftRight className="h-4 w-4 text-primary" />
                     <p className="text-xs text-muted-foreground">Transfer</p>
                   </div>
-                  <p className="text-sm font-bold tabular-nums">{summary.transfer}</p>
-                  <p className="text-xs text-muted-foreground tabular-nums">{formatRupiah(summary.transferAmount)}</p>
+                  <p className="text-sm font-bold font-num">{summary.transfer}</p>
+                  <p className="text-xs text-muted-foreground font-num">{formatRupiah(summary.transferAmount)}</p>
                 </div>
               </div>
 
               {parsed.errors.length > 0 && (
-                <div className="mt-3 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100 rounded-lg p-3 text-xs">
+                <div className="mt-3 bg-warning/10 text-warning rounded-lg p-3 text-xs">
                   <p className="font-medium mb-1">{parsed.errors.length} baris di-skip karena error parse:</p>
                   <ul className="space-y-0.5 max-h-32 overflow-y-auto">
                     {parsed.errors.slice(0, 5).map((e, i) => (
@@ -524,13 +524,13 @@ export function ImportWizard() {
 
       {/* ─── Step: Result ───────────────────────────────────────────────── */}
       {step === "result" && result && (
-        <Card className={cn("border-border/50", result.failed.length === 0 ? "bg-green-50/50 dark:bg-green-950/30" : "")}>
+        <Card className={cn("border-border/50", result.failed.length === 0 ? "bg-positive/10" : "")}>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               {result.failed.length === 0 ? (
-                <><CheckCircle2 className="h-5 w-5 text-green-600" /> Import Berhasil!</>
+                <><CheckCircle2 className="h-5 w-5 text-positive" /> Import Berhasil!</>
               ) : (
-                <><AlertCircle className="h-5 w-5 text-amber-600" /> Import Selesai dengan Catatan</>
+                <><AlertCircle className="h-5 w-5 text-warning" /> Import Selesai dengan Catatan</>
               )}
             </CardTitle>
             <CardDescription>
@@ -540,15 +540,15 @@ export function ImportWizard() {
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
               <div className="rounded-lg border border-border p-3 text-center">
-                <p className="text-2xl font-bold tabular-nums">{result.inserted}</p>
+                <p className="text-2xl font-bold font-num">{result.inserted}</p>
                 <p className="text-xs text-muted-foreground">Berhasil</p>
               </div>
               <div className="rounded-lg border border-border p-3 text-center">
-                <p className="text-2xl font-bold tabular-nums text-sky-600">{result.transferPairs}</p>
+                <p className="text-2xl font-bold font-num text-primary">{result.transferPairs}</p>
                 <p className="text-xs text-muted-foreground">Transfer</p>
               </div>
               <div className="rounded-lg border border-border p-3 text-center">
-                <p className={cn("text-2xl font-bold tabular-nums", result.failed.length > 0 ? "text-amber-600" : "text-muted-foreground")}>
+                <p className={cn("text-2xl font-bold font-num", result.failed.length > 0 ? "text-warning" : "text-muted-foreground")}>
                   {result.failed.length}
                 </p>
                 <p className="text-xs text-muted-foreground">Gagal</p>
@@ -556,7 +556,7 @@ export function ImportWizard() {
             </div>
 
             {result.failed.length > 0 && (
-              <div className="bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-100 rounded-lg p-3 text-xs mb-3">
+              <div className="bg-warning/10 text-warning rounded-lg p-3 text-xs mb-3">
                 <p className="font-medium mb-1">Detail error (maks 5):</p>
                 <ul className="space-y-0.5 max-h-32 overflow-y-auto">
                   {result.failed.slice(0, 5).map((f, i) => (

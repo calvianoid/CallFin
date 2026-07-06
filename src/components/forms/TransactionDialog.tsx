@@ -115,7 +115,8 @@ function TransactionForm({
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
+        <div className="sm:hidden mx-auto -mt-1 mb-1 h-1 w-10 rounded-full bg-border" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI && <Sparkles className="h-4 w-4 text-primary" />}

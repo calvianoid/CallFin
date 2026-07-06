@@ -1,28 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
-import { formatRupiah } from "@/lib/mock-data";
+import { formatRupiah, WALLET_TYPE_LABEL } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { useTranslation } from "@/lib/i18n/context";
+import { Wallet as WalletIcon, Landmark, Banknote, Smartphone, CreditCard } from "lucide-react";
+import type { Wallet } from "@/types";
 
 /** Click-and-drag panning + vertical-wheel-to-horizontal, so the strip pans
- * on desktop mouse the same way it swipes on touch (native overflow-x-auto
- * otherwise requires Shift+wheel or a trackpad, which reads as "stuck"). */
+ * on desktop mouse the same way it swipes on touch. No-ops when the row
+ * doesn't overflow (i.e. the desktop grid), so it's safe to always attach. */
 function useDragToScroll<T extends HTMLElement>(ref: React.RefObject<T | null>) {
   const drag = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
 
   function onPointerDown(e: React.PointerEvent) {
     const el = ref.current;
-    if (!el) return;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
     drag.current = { active: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
     el.setPointerCapture(e.pointerId);
   }
-
   function onPointerMove(e: React.PointerEvent) {
     const el = ref.current;
     if (!el || !drag.current.active) return;
@@ -30,153 +28,112 @@ function useDragToScroll<T extends HTMLElement>(ref: React.RefObject<T | null>) 
     if (Math.abs(dx) > 3) drag.current.moved = true;
     el.scrollLeft = drag.current.startScroll - dx;
   }
-
   function endDrag(e: React.PointerEvent) {
     const el = ref.current;
     if (!el) return;
     drag.current.active = false;
-    el.releasePointerCapture(e.pointerId);
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
   }
-
   function onWheel(e: React.WheelEvent) {
     const el = ref.current;
     if (!el || el.scrollWidth <= el.clientWidth) return;
-    // Only hijack when the scroll is more vertical than horizontal, so
-    // trackpad horizontal swipes still pass through untouched.
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       el.scrollLeft += e.deltaY;
       e.preventDefault();
     }
   }
-
-  // Suppress the click that follows a drag (e.g. on the wallet cards' Link).
   function onClickCapture(e: React.MouseEvent) {
     if (drag.current.moved) e.preventDefault();
   }
 
-  return {
-    onPointerDown,
-    onPointerMove,
-    onPointerUp: endDrag,
-    onPointerCancel: endDrag,
-    onWheel,
-    onClickCapture,
-  };
+  return { onPointerDown, onPointerMove, onPointerUp: endDrag, onPointerCancel: endDrag, onWheel, onClickCapture };
+}
+
+const WALLET_ICON: Record<Wallet["type"], typeof WalletIcon> = {
+  bank: Landmark,
+  cash: Banknote,
+  ewallet: Smartphone,
+  credit: CreditCard,
+};
+
+/** Small-caps sub-label under the wallet name: masked account number, an
+ *  explicit subtitle, or the wallet-type label as a fallback. */
+function walletSubLabel(w: Wallet): string {
+  if (w.account_number) return `•••• ${w.account_number}`;
+  if (w.subtitle) return w.subtitle;
+  return WALLET_TYPE_LABEL[w.type] ?? "";
 }
 
 export function WalletsStrip() {
   const { wallets, isHydrating } = useStore();
-  const { t } = useTranslation();
-  const total = wallets.reduce((s, w) => s + w.balance, 0);
   const stripRef = useRef<HTMLDivElement>(null);
   const dragProps = useDragToScroll(stripRef);
-  // Native scrollbar is hidden (see no-scrollbar), so this thin bar is the
-  // only visual cue that the strip scrolls and how far there is to go.
-  const [scrollBar, setScrollBar] = useState({ thumbPct: 100, leftPct: 0, visible: false });
-
-  const updateScrollBar = useCallback(() => {
-    const el = stripRef.current;
-    if (!el) return;
-    const { scrollWidth, clientWidth, scrollLeft } = el;
-    if (scrollWidth <= clientWidth + 1) {
-      setScrollBar({ thumbPct: 100, leftPct: 0, visible: false });
-      return;
-    }
-    const thumbPct = Math.max((clientWidth / scrollWidth) * 100, 12);
-    const maxScroll = scrollWidth - clientWidth;
-    const leftPct = maxScroll > 0 ? (scrollLeft / maxScroll) * (100 - thumbPct) : 0;
-    setScrollBar({ thumbPct, leftPct, visible: true });
-  }, []);
-
-  useEffect(() => {
-    updateScrollBar();
-    const el = stripRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", updateScrollBar, { passive: true });
-    window.addEventListener("resize", updateScrollBar);
-    return () => {
-      el.removeEventListener("scroll", updateScrollBar);
-      window.removeEventListener("resize", updateScrollBar);
-    };
-  }, [updateScrollBar, wallets.length]);
 
   if (isHydrating && wallets.length === 0) {
     return (
-      <Card className="border-border/50 overflow-hidden">
-        <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
-          <div className="space-y-1.5">
-            <Skeleton className="h-3 w-32" />
-            <Skeleton className="h-5 w-40" />
-          </div>
-          <Skeleton className="h-3 w-20" />
-        </div>
-        <div className="flex gap-2 p-3 overflow-hidden">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="min-w-[140px] h-[68px] rounded-xl shrink-0" />
-          ))}
-        </div>
-      </Card>
+      <div className="flex gap-3 overflow-hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} className="min-w-[150px] h-[104px] rounded-2xl shrink-0" />
+        ))}
+      </div>
     );
   }
 
+  // The first bank account reads as the "primary" wallet (matches the design's
+  // highlighted card); fall back to the first wallet of any type.
+  const primaryId = wallets.find((w) => w.type === "bank")?.id ?? wallets[0]?.id;
+
   return (
-    <Card className="border-border/50 overflow-hidden">
-      <div className="px-4 py-3 flex items-center justify-between border-b border-border/50">
-        <div>
-          <p className="text-xs text-muted-foreground">{t("dashboard.totalBalance")}</p>
-          <p className="text-lg font-bold tabular-nums tracking-tight">{formatRupiah(total)}</p>
-        </div>
-        <Link href="/wallets" className="text-xs text-primary font-medium hover:underline">
-          {t("dashboard.manageWallets")}
-        </Link>
-      </div>
-      <div
-        ref={stripRef}
-        {...dragProps}
-        className="flex gap-2.5 p-3 pl-4 overflow-x-auto no-scrollbar snap-x snap-proximity scroll-pl-4 cursor-grab active:cursor-grabbing select-none"
-      >
-        {wallets.map((w) => (
-          <div
+    <div
+      ref={stripRef}
+      {...dragProps}
+      className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-proximity -mx-4 px-4 sm:mx-0 sm:px-0 cursor-grab active:cursor-grabbing select-none lg:grid lg:grid-cols-5 lg:overflow-visible lg:cursor-default"
+    >
+      {wallets.map((w) => {
+        const primary = w.id === primaryId;
+        const Icon = WALLET_ICON[w.type] ?? WalletIcon;
+        return (
+          <Link
             key={w.id}
-            className="min-w-[144px] rounded-2xl p-3.5 text-white shrink-0 relative overflow-hidden snap-start shadow-md shadow-black/10 transition-transform duration-200 hover:scale-[1.03] active:scale-[0.97]"
+            href="/wallets"
+            className={cn(
+              "group min-w-[168px] lg:min-w-0 shrink-0 snap-start rounded-2xl p-4 flex flex-col justify-between min-h-[104px] transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0",
+              primary
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "bg-card border border-border hover:border-border/80",
+            )}
           >
-            <div className={cn("absolute inset-0", w.color)} />
-            <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-black/25" />
-            <div className="absolute -top-6 -right-6 w-16 h-16 rounded-full bg-white/15 blur-xl" />
-            <div className="relative">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm text-base">
-                  {w.icon}
-                </span>
-                {w.balance < 0 && (
-                  <span className="text-[9px] font-semibold uppercase tracking-wide bg-black/25 rounded-full px-1.5 py-0.5">
-                    {t("wallets.negative")}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] uppercase tracking-wide opacity-80 truncate">{w.name}</p>
-              <p className="text-sm font-bold mt-0.5 tabular-nums tracking-tight">{formatRupiah(w.balance)}</p>
+            <div className="flex items-start justify-between gap-2">
+              <p className={cn("text-sm font-medium truncate", primary ? "text-primary-foreground" : "text-foreground")}>
+                {w.name}
+              </p>
+              <Icon className={cn("h-4 w-4 shrink-0", primary ? "text-primary-foreground/80" : "text-muted-foreground")} />
             </div>
-          </div>
-        ))}
-        <Link
-          href="/wallets"
-          className="min-w-[84px] rounded-2xl p-3 border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary hover:scale-[1.03] active:scale-[0.97] transition-all duration-200 shrink-0 snap-start"
-        >
-          <Plus className="h-4 w-4 mb-1" />
-          <span className="text-[10px]">{t("common.add")}</span>
-        </Link>
-      </div>
-      {scrollBar.visible && (
-        <div className="px-3 pb-3 -mt-1">
-          <div className="h-1 rounded-full bg-border/50 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-primary/60 transition-[margin-left,width] duration-100"
-              style={{ width: `${scrollBar.thumbPct}%`, marginLeft: `${scrollBar.leftPct}%` }}
-            />
-          </div>
-        </div>
-      )}
-    </Card>
+            <div className="space-y-1">
+              <p
+                className={cn(
+                  "text-[10px] font-medium uppercase tracking-[0.12em] font-num",
+                  primary ? "text-primary-foreground/70" : "text-muted-foreground",
+                )}
+              >
+                {walletSubLabel(w)}
+              </p>
+              <p
+                className={cn(
+                  "text-lg font-semibold font-num tracking-tight",
+                  primary
+                    ? "text-primary-foreground"
+                    : w.balance < 0
+                      ? "text-destructive"
+                      : "text-foreground",
+                )}
+              >
+                {formatRupiah(w.balance)}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
   );
 }

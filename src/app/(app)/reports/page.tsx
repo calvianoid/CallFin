@@ -27,10 +27,24 @@ const CHART_COLORS = [
   "#6366f1", "#a855f7", "#22c55e", "#eab308", "#0ea5e9",
 ];
 
-export default function ReportsPage() {
+export default function ReportsPage({
+  embedded = false,
+  view,
+  month: monthProp,
+  onMonthChange,
+}: {
+  embedded?: boolean;
+  /** When embedded in the Insight tabs, gate which section group renders. */
+  view?: "ringkasan" | "kategori" | "dompet";
+  month?: string;
+  onMonthChange?: (m: string) => void;
+} = {}) {
   const { transactions, budgets, goals, wallets, isHydrating } = useStore();
   const { t, locale } = useTranslation();
-  const [month, setMonth] = useState(() => getYearMonth());
+  const [monthState, setMonthState] = useState(() => getYearMonth());
+  const month = monthProp ?? monthState;
+  const setMonth = onMonthChange ?? setMonthState;
+  const show = (v: "ringkasan" | "kategori" | "dompet") => !view || view === v;
 
   // ──────────────────────────────────────────────────────────────────────────
   // Main stats for selected month
@@ -352,7 +366,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-5xl space-y-5">
+    <div className={cn(embedded ? "space-y-5" : "p-4 sm:p-6 max-w-5xl space-y-5")}>
       {/* Print-only header — visible only when printing */}
       <div className="print-only mb-3 border-b border-gray-300 pb-2">
         <div className="flex items-center justify-between">
@@ -364,25 +378,31 @@ export default function ReportsPage() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-3 no-print">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold">{t("reports.title")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            {t("reports.subtitle", { month: formatMonthLabel(month) })}
-          </p>
-        </div>
-        <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handlePrint}>
-          <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("reports.export")}</span>
-          <span className="sm:hidden">{t("reports.exportShort")}</span>
-        </Button>
-      </div>
+      {!embedded && (
+        <>
+          <div className="flex items-center justify-between gap-3 no-print">
+            <div>
+              <h1 className="text-lg sm:text-xl font-bold">{t("reports.title")}</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                {t("reports.subtitle", { month: formatMonthLabel(month) })}
+              </p>
+            </div>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={handlePrint}>
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("reports.export")}</span>
+              <span className="sm:hidden">{t("reports.exportShort")}</span>
+            </Button>
+          </div>
 
-      <div className="no-print">
-        <MonthPicker value={month} onChange={setMonth} />
-      </div>
+          <div className="no-print">
+            <MonthPicker value={month} onChange={setMonth} />
+          </div>
+        </>
+      )}
 
       {/* ─── Hero KPIs ───────────────────────────────────────────────────── */}
+      {show("ringkasan") && (
+      <>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiCard
           icon={<Activity className="h-4 w-4 text-primary" />}
@@ -392,47 +412,23 @@ export default function ReportsPage() {
           accent={stats.net >= 0 ? "positive" : "negative"}
         />
         <KpiCard
-          icon={<PiggyBank className="h-4 w-4 text-violet-600" />}
+          icon={<PiggyBank className="h-4 w-4 text-primary" />}
           label={t("reports.savingsRate")}
           value={`${stats.savingsRate.toFixed(0)}%`}
           subtitle={stats.savingsRate >= 20 ? t("reports.targetMet") : t("reports.notIdeal")}
           accent={stats.savingsRate >= 20 ? "positive" : "neutral"}
         />
         <KpiCard
-          icon={<Receipt className="h-4 w-4 text-sky-600" />}
+          icon={<Receipt className="h-4 w-4 text-primary" />}
           label={t("reports.txCount")}
           value={String(stats.inMonth.length)}
           subtitle={`${stats.activeDays} ${t("reports.activeDays")}`}
         />
         <KpiCard
-          icon={<Calendar className="h-4 w-4 text-amber-600" />}
+          icon={<Calendar className="h-4 w-4 text-warning" />}
           label={t("reports.dailyAvg")}
           value={formatRupiah(stats.dailyAvgExpense)}
           subtitle={t("reports.basedOnActive")}
-        />
-      </div>
-
-      {/* ─── Big summary ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <SummaryCard
-          icon={<TrendingUp className="h-4 w-4 text-green-600" />}
-          label={t("reports.income")}
-          value={formatRupiah(stats.totalIncome)}
-          delta={deltaPct(stats.totalIncome, prevStats.prevIncome)}
-          color="text-green-600"
-        />
-        <SummaryCard
-          icon={<TrendingDown className="h-4 w-4 text-red-500" />}
-          label={t("reports.expense")}
-          value={formatRupiah(stats.totalExpense)}
-          delta={deltaPct(stats.totalExpense, prevStats.prevExpense)}
-          deltaInvert
-        />
-        <SummaryCard
-          icon={<PiggyBank className="h-4 w-4 text-violet-600" />}
-          label={t("reports.goalSavings")}
-          value={formatRupiah(stats.totalSavings)}
-          color="text-violet-600"
         />
       </div>
 
@@ -452,10 +448,10 @@ export default function ReportsPage() {
               key={i}
               className={cn(
                 "flex items-start gap-2 text-sm rounded-lg p-2.5",
-                ins.type === "positive" && "bg-green-50 text-green-800 dark:bg-green-950/40 dark:text-green-300",
-                ins.type === "warning" && "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+                ins.type === "positive" && "bg-positive/10 text-positive",
+                ins.type === "warning" && "bg-warning/10 text-warning",
                 ins.type === "tip" && "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
-                ins.type === "info" && "bg-violet-50 text-violet-800 dark:bg-violet-950/40 dark:text-violet-300",
+                ins.type === "info" && "bg-primary/10 text-primary",
               )}
             >
               <span className="mt-0.5 shrink-0">
@@ -508,8 +504,8 @@ export default function ReportsPage() {
                       <div key={i} className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ background: d.color }} />
                         <span className="flex-1 truncate">{d.name}</span>
-                        <span className="text-muted-foreground tabular-nums">{pct.toFixed(0)}%</span>
-                        <span className="font-medium tabular-nums w-24 text-right">{formatRupiah(d.value)}</span>
+                        <span className="text-muted-foreground font-num">{pct.toFixed(0)}%</span>
+                        <span className="font-medium font-num w-24 text-right">{formatRupiah(d.value)}</span>
                       </div>
                     );
                   })}
@@ -545,105 +541,158 @@ export default function ReportsPage() {
         </Card>
       </div>
 
-      {/* ─── Daily pattern ───────────────────────────────────────────────── */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{t("reports.dailyActivity")} — {formatMonthLabel(month)}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={stats.dailySeries} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={Math.floor(stats.daysInMonth / 10)} />
-                <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}${locale === "en" ? "M" : "jt"}`} />
-                <Tooltip
-                  contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }}
-                  formatter={(v) => formatRupiah(Number(v) || 0)}
-                  labelFormatter={(d) => `${locale === "en" ? "Day" : "Tanggal"} ${d}`}
-                />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Line type="monotone" dataKey="expense" name={t("reports.expense")} stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
-                <Line type="monotone" dataKey="income" name={t("reports.income")} stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      </>
+      )}
 
-      {/* ─── Top 5 + Wallet Activity row ─────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* Top 5 expenses */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("reports.top5Expense")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.topExpenses.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">{t("reports.noExpense")}</p>
-            ) : stats.topExpenses.map((tx) => {
-              const w = wallets.find((x) => x.id === tx.wallet_id);
-              return (
-                <div key={tx.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/40">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-red-100 dark:bg-red-950 shrink-0">
-                    <TrendingDown className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+      {/* ═══ KATEGORI (V4-0): rincian per kategori | 5 terbesar + pemasukan ═══ */}
+      {show("kategori") && (
+        <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-3 items-start">
+          {/* Pengeluaran per kategori */}
+          <Card className="border-border/50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm">{t("reports.byCategory")}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {stats.categoryBreakdown.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">{t("reports.noExpense")}</p>
+              ) : stats.categoryBreakdown.map((c, i) => {
+                const pct = (c.amount / stats.totalBreakdown) * 100;
+                const prev = prevStats.prevByCat[c.category];
+                const diff = prev && prev > 0 ? ((c.amount - prev) / prev) * 100 : null;
+                return (
+                  <div key={c.category} className="flex items-center gap-3">
+                    <span className="text-sm w-28 sm:w-32 truncate shrink-0">{c.category}</span>
+                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: categoryColor(c.category, i) }} />
+                    </div>
+                    {diff !== null && Math.abs(diff) >= 5 && (
+                      <span className={cn("text-[10px] font-num shrink-0 w-24 text-right", diff > 0 ? "text-destructive" : "text-positive")}>
+                        {diff > 0 ? "↑" : "↓"}{Math.abs(diff).toFixed(0)}% vs {formatMonthLabel(prevMonth)}
+                      </span>
+                    )}
+                    <span className="text-xs sm:text-sm font-medium w-24 text-right shrink-0 font-num">{formatRupiah(c.amount).replace(/^Rp\s?/, "")}</span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{tx.description || tx.category}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary" className={cn("text-[10px] h-4", CATEGORY_COLORS[tx.category] || "bg-gray-100 text-gray-700")}>
-                        {tx.category}
-                      </Badge>
-                      {w && <span>{w.icon} {w.name}</span>}
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Kanan: 5 pengeluaran terbesar + pemasukan per kategori */}
+          <div className="space-y-3">
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{t("reports.top5Expense")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {stats.topExpenses.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">{t("reports.noExpense")}</p>
+                ) : stats.topExpenses.map((tx, idx) => {
+                  const w = wallets.find((x) => x.id === tx.wallet_id);
+                  return (
+                    <div key={tx.id} className="flex items-center gap-3 py-1.5">
+                      <span className="text-xs font-num text-muted-foreground w-4 text-center shrink-0">{idx + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{tx.description || tx.category}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{tx.category}{w ? ` · ${w.name}` : ""}</p>
+                      </div>
+                      <p className="text-sm font-semibold font-num shrink-0">{formatRupiah(tx.amount).replace(/^Rp\s?/, "")}</p>
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            {stats.incomeBreakdown.length > 0 && (
+              <Card className="border-border/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">{t("reports.incomeByCategory")}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {stats.incomeBreakdown.map((c) => {
+                    const pct = (c.amount / stats.totalIncome) * 100;
+                    return (
+                      <div key={c.category} className="space-y-1">
+                        <div className="flex items-center justify-between text-sm gap-2">
+                          <span className="truncate">{c.category}</span>
+                          <span className="font-num font-medium text-positive shrink-0">{formatRupiah(c.amount).replace(/^Rp\s?/, "")}</span>
+                        </div>
+                        <div className="bg-muted rounded-full h-2 overflow-hidden">
+                          <div className="h-full rounded-full bg-positive/100" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ DOMPET (ZI-0): 3 ringkasan + aktivitas harian | aktivitas per dompet ═══ */}
+      {show("dompet") && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <SummaryCard icon={<TrendingUp className="h-4 w-4 text-positive" />} label={t("reports.income")} value={formatRupiah(stats.totalIncome)} color="text-positive" />
+            <SummaryCard icon={<TrendingDown className="h-4 w-4 text-destructive" />} label={t("reports.expense")} value={formatRupiah(stats.totalExpense)} color="text-destructive" />
+            <SummaryCard icon={<PiggyBank className="h-4 w-4 text-primary" />} label={t("reports.goalSavings")} value={formatRupiah(stats.totalSavings)} color="text-primary" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+            {/* Aktivitas harian */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{t("reports.dailyActivity")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={stats.dailySeries} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.5} vertical={false} />
+                      <XAxis dataKey="date" tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} interval={Math.floor(stats.daysInMonth / 10)} />
+                      <YAxis tick={{ fontSize: 10, fill: "var(--muted-foreground)" }} axisLine={false} tickLine={false} tickFormatter={(v) => `${(v / 1_000_000).toFixed(1)}${locale === "en" ? "M" : "jt"}`} />
+                      <Tooltip contentStyle={{ background: "var(--popover)", border: "1px solid var(--border)", borderRadius: 8, fontSize: 12 }} formatter={(v) => formatRupiah(Number(v) || 0)} labelFormatter={(d) => `${locale === "en" ? "Day" : "Tanggal"} ${d}`} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Line type="monotone" dataKey="expense" name={t("reports.expense")} stroke="#ef4444" strokeWidth={2} dot={{ r: 2 }} />
+                      <Line type="monotone" dataKey="income" name={t("reports.income")} stroke="#10b981" strokeWidth={2} dot={{ r: 2 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Aktivitas per dompet */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">{t("reports.walletActivity")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2.5">
+                {stats.walletActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">{locale === "en" ? "No wallet activity yet." : "Belum ada aktivitas dompet."}</p>
+                ) : stats.walletActivity.map((w, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span>{w.icon}</span>
+                        <span className="truncate">{w.name}</span>
+                      </span>
+                      <span className={cn("text-xs font-num font-semibold", w.net >= 0 ? "text-positive" : "text-destructive")}>
+                        {w.net >= 0 ? "+" : ""}{formatRupiah(w.net)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground font-num">
+                      <span className="flex items-center gap-0.5"><ArrowUpRight className="h-2.5 w-2.5 text-positive" />{formatRupiah(w.in)}</span>
+                      <span className="flex items-center gap-0.5"><ArrowDownRight className="h-2.5 w-2.5 text-destructive" />{formatRupiah(w.out)}</span>
                     </div>
                   </div>
-                  <p className="text-sm font-semibold tabular-nums shrink-0">{formatRupiah(tx.amount)}</p>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      )}
 
-        {/* Wallet activity */}
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("reports.walletActivity")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.walletActivity.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">{locale === "en" ? "No wallet activity yet." : "Belum ada aktivitas dompet."}</p>
-            ) : stats.walletActivity.map((w, i) => (
-              <div key={i} className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <span>{w.icon}</span>
-                    <span className="truncate">{w.name}</span>
-                  </span>
-                  <span className={cn(
-                    "text-xs tabular-nums font-semibold",
-                    w.net >= 0 ? "text-green-600 dark:text-green-400" : "text-red-500"
-                  )}>
-                    {w.net >= 0 ? "+" : ""}{formatRupiah(w.net)}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground tabular-nums">
-                  <span className="flex items-center gap-0.5">
-                    <ArrowUpRight className="h-2.5 w-2.5 text-green-600 dark:text-green-400" />
-                    {formatRupiah(w.in)}
-                  </span>
-                  <span className="flex items-center gap-0.5">
-                    <ArrowDownRight className="h-2.5 w-2.5 text-red-500" />
-                    {formatRupiah(w.out)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ─── Budget adherence ────────────────────────────────────────────── */}
-      {budgetStatus.length > 0 && (
+      {/* ─── Standalone /reports extras: budget adherence + goal contributions ── */}
+      {!view && budgetStatus.length > 0 && (
         <Card className="border-border/50">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">{t("reports.budgetCompliance")}</CardTitle>
@@ -659,15 +708,15 @@ export default function ReportsPage() {
                       <Badge variant="secondary" className={cn("text-[10px] h-4", CATEGORY_COLORS[b.category] || "bg-gray-100 text-gray-700")}>
                         {b.category}
                       </Badge>
-                      {isDanger && <span className="text-[10px] font-bold text-red-500">{locale === "en" ? "OVER" : "OVER"}</span>}
-                      {isWarning && <span className="text-[10px] font-bold text-amber-600">{locale === "en" ? "WATCH" : "WASPADA"}</span>}
+                      {isDanger && <span className="text-[10px] font-bold text-destructive">OVER</span>}
+                      {isWarning && <span className="text-[10px] font-bold text-warning">{locale === "en" ? "WATCH" : "WASPADA"}</span>}
                     </span>
-                    <span className="text-xs tabular-nums">
+                    <span className="text-xs font-num">
                       <span className="font-semibold">{formatRupiah(b.spent)}</span>
                       <span className="text-muted-foreground"> / {formatRupiah(b.limit_amount)}</span>
                     </span>
                   </div>
-                  <Progress value={Math.min(b.pct, 100)} className={cn("h-1.5", isDanger ? "[&>div]:bg-red-500" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-primary")} />
+                  <Progress value={Math.min(b.pct, 100)} className={cn("h-1.5", isDanger ? "[&>div]:bg-destructive/100" : isWarning ? "[&>div]:bg-warning/100" : "[&>div]:bg-primary")} />
                 </div>
               );
             })}
@@ -675,82 +724,19 @@ export default function ReportsPage() {
         </Card>
       )}
 
-      {/* ─── Expense by category detail ──────────────────────────────────── */}
-      <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm">{t("reports.byCategory")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2.5">
-          {stats.categoryBreakdown.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">{t("reports.noExpense")}</p>
-          ) : stats.categoryBreakdown.map((c, i) => {
-            const pct = (c.amount / stats.totalBreakdown) * 100;
-            const prev = prevStats.prevByCat[c.category];
-            const diff = prev && prev > 0 ? ((c.amount - prev) / prev) * 100 : null;
-            return (
-              <div key={c.category} className="space-y-1">
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary" className={cn("text-xs w-28 sm:w-32 justify-center shrink-0", CATEGORY_COLORS[c.category] || "bg-gray-100 text-gray-700")}>
-                    {c.category}
-                  </Badge>
-                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: categoryColor(c.category, i) }} />
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium w-24 sm:w-32 text-right shrink-0 tabular-nums">{formatRupiah(c.amount)}</span>
-                </div>
-                {diff !== null && Math.abs(diff) >= 5 && (
-                  <p className={cn(
-                    "text-[10px] tabular-nums pl-32",
-                    diff > 0 ? "text-red-500" : "text-green-600 dark:text-green-400"
-                  )}>
-                    {diff > 0 ? "↑" : "↓"} {Math.abs(diff).toFixed(0)}% vs {formatMonthLabel(prevMonth)}
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
-
-      {/* ─── Income breakdown ────────────────────────────────────────────── */}
-      {stats.incomeBreakdown.length > 0 && (
-        <Card className="border-border/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">{t("reports.incomeByCategory")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {stats.incomeBreakdown.map((c) => {
-              const pct = (c.amount / stats.totalIncome) * 100;
-              return (
-                <div key={c.category} className="flex items-center gap-3">
-                  <Badge variant="secondary" className={cn("text-xs w-28 sm:w-32 justify-center shrink-0", CATEGORY_COLORS[c.category] || "bg-emerald-100 text-emerald-700")}>
-                    {c.category}
-                  </Badge>
-                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                    <div className="h-full rounded-full bg-green-500" style={{ width: `${pct}%` }} />
-                  </div>
-                  <span className="text-xs sm:text-sm font-medium w-24 sm:w-32 text-right shrink-0 tabular-nums">{formatRupiah(c.amount)}</span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ─── Goal contributions list ─────────────────────────────────────── */}
-      {stats.savings.length > 0 && (
-        <Card className="border-violet-200 bg-violet-50/50 dark:bg-violet-950/20 dark:border-violet-900">
+      {!view && stats.savings.length > 0 && (
+        <Card className="border-primary/30 bg-primary/10">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <PiggyBank className="h-4 w-4 text-violet-600" />
+              <PiggyBank className="h-4 w-4 text-primary" />
               {t("reports.savingsThisMonth")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            {stats.savings.map((t) => (
-              <div key={t.id} className="flex items-center justify-between bg-background rounded-lg p-2.5 text-sm">
-                <span className="truncate">{t.description}</span>
-                <span className="font-semibold text-violet-700 dark:text-violet-300 shrink-0 ml-2 tabular-nums">{formatRupiah(t.amount)}</span>
+            {stats.savings.map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between bg-background rounded-lg p-2.5 text-sm">
+                <span className="truncate">{tx.description}</span>
+                <span className="font-semibold text-primary shrink-0 ml-2 font-num">{formatRupiah(tx.amount)}</span>
               </div>
             ))}
           </CardContent>
@@ -784,9 +770,9 @@ function KpiCard({
           <p className="text-[11px] text-muted-foreground uppercase tracking-wide font-medium">{label}</p>
         </div>
         <p className={cn(
-          "text-base sm:text-lg font-bold tabular-nums leading-tight",
-          accent === "positive" && "text-green-600 dark:text-green-400",
-          accent === "negative" && "text-red-500",
+          "text-base sm:text-lg font-bold font-num leading-tight",
+          accent === "positive" && "text-positive",
+          accent === "negative" && "text-destructive",
         )}>
           {value}
         </p>
@@ -822,11 +808,11 @@ function SummaryCard({
           {icon}
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
-        <p className={cn("text-lg sm:text-xl font-bold tabular-nums break-words", color)}>{value}</p>
+        <p className={cn("text-lg sm:text-xl font-bold font-num break-words", color)}>{value}</p>
         {delta !== null && delta !== undefined && (
           <p className={cn(
-            "text-[10px] tabular-nums mt-0.5",
-            goodDirection ? "text-green-600 dark:text-green-400" : "text-red-500"
+            "text-[10px] font-num mt-0.5",
+            goodDirection ? "text-positive" : "text-destructive"
           )}>
             {delta > 0 ? "↑" : "↓"} {Math.abs(delta).toFixed(0)}% vs bulan lalu
           </p>
@@ -834,9 +820,4 @@ function SummaryCard({
       </CardContent>
     </Card>
   );
-}
-
-function deltaPct(curr: number, prev: number): number | null {
-  if (prev === 0) return null;
-  return ((curr - prev) / prev) * 100;
 }

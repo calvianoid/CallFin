@@ -61,7 +61,7 @@ function BudgetCapForm({ onOpenChange }: { onOpenChange: (open: boolean) => void
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
       <DialogHeader>
         <DialogTitle>{t("cap.title")}</DialogTitle>
         <DialogDescription>{t("cap.desc")}</DialogDescription>
@@ -84,7 +84,7 @@ function BudgetCapForm({ onOpenChange }: { onOpenChange: (open: boolean) => void
             </p>
           )}
           {tooLow && (
-            <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2">
+            <div className="flex items-start gap-2 text-xs text-warning bg-warning/10 rounded-md p-2">
               <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <span>{t("cap.tooLow", { amount: formatRupiah(minRequired) })}</span>
             </div>

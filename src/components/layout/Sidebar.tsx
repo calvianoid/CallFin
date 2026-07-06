@@ -6,16 +6,13 @@ import { cn } from "@/lib/utils";
 import {
   TrendingUp,
   MessageSquare,
+  Home,
   List,
-  PieChart,
   Target,
-  FileText,
+  BarChart3,
   Settings,
   LogOut,
-  Tag,
   Wallet as WalletIcon,
-  Upload,
-  Rocket,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,16 +22,14 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { useStore } from "@/lib/store";
 import { usePreferences } from "@/lib/preferences";
 
-const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey; label?: string }[] = [
-  { href: "/", icon: MessageSquare, key: "nav.dashboard" },
+// Revamp IA: 10 item → 5. Kategori & Import nempel di Transaksi,
+// Budget+Goals = Rencana, Laporan+Kebebasan Finansial = Insight.
+const navItems: { href: string; icon: typeof MessageSquare; key: TranslationKey; match?: string[] }[] = [
+  { href: "/", icon: Home, key: "nav.home" },
   { href: "/wallets", icon: WalletIcon, key: "nav.wallets" },
-  { href: "/transactions", icon: List, key: "nav.transactions" },
-  { href: "/budgets", icon: PieChart, key: "nav.budgets" },
-  { href: "/goals", icon: Target, key: "nav.goals" },
-  { href: "/categories", icon: Tag, key: "nav.categories" },
-  { href: "/reports", icon: FileText, key: "nav.reports" },
-  { href: "/freedom", icon: Rocket, key: "nav.freedom" },
-  { href: "/import", icon: Upload, key: "nav.dashboard", label: "Import" },
+  { href: "/transactions", icon: List, key: "nav.transactions", match: ["/transactions", "/categories", "/import"] },
+  { href: "/rencana", icon: Target, key: "nav.plan", match: ["/rencana", "/budgets", "/goals"] },
+  { href: "/insight", icon: BarChart3, key: "nav.insight", match: ["/insight", "/reports", "/freedom"] },
 ];
 
 interface SidebarProps {
@@ -46,8 +41,8 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { t } = useTranslation();
   const { profile, isHydrating } = useStore();
-  const { showFreedom } = usePreferences();
-  const visibleNavItems = navItems.filter((item) => item.href !== "/freedom" || showFreedom);
+  usePreferences(); // keep provider subscription (showFreedom now only hides the Insight tab)
+  const visibleNavItems = navItems;
   const displayName = profile?.full_name || "Guest";
   const displayEmail = profile?.email || "—";
   const initials = displayName.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
@@ -63,22 +58,24 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </div>
 
       <nav className="flex flex-col gap-1 flex-1">
-        {visibleNavItems.map(({ href, icon: Icon, key, label }) => {
-          const active = pathname === href;
+        {visibleNavItems.map(({ href, icon: Icon, key, match }) => {
+          const active = match
+            ? match.some((m) => pathname === m || pathname.startsWith(m + "/"))
+            : pathname === href;
           return (
             <Link
               key={href}
               href={href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors",
                 active
-                  ? "bg-primary/10 text-primary"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  ? "bg-sidebar-accent text-sidebar-foreground font-medium"
+                  : "text-muted-foreground font-normal hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
               )}
             >
               <Icon className={cn("h-4 w-4 shrink-0", active && "text-primary")} />
-              {label ?? t(key)}
+              {t(key)}
             </Link>
           );
         })}
@@ -145,7 +142,7 @@ export function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function Sidebar({ className }: SidebarProps) {
   return (
-    <aside className={cn("flex flex-col w-60 min-h-screen bg-sidebar border-r border-sidebar-border py-4 px-3 shrink-0", className)}>
+    <aside className={cn("flex flex-col w-56 min-h-screen bg-sidebar border-r border-sidebar-border py-5 px-3 shrink-0", className)}>
       <SidebarContent />
     </aside>
   );

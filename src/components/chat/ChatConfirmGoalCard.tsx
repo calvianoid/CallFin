@@ -34,13 +34,13 @@ export function ChatConfirmGoalCard({ parsed, wallet, goal, onConfirm, onEdit, o
       <div className="flex flex-col gap-1 max-w-[85%] flex-1">
         <span className="text-xs font-medium text-muted-foreground">CallFin AI</span>
 
-        <div className="bg-muted rounded-2xl rounded-tl-sm p-3 space-y-3 border border-violet-200">
+        <div className="bg-muted rounded-2xl rounded-tl-sm p-3 space-y-3 border border-primary/30">
           <p className="text-sm">{t("chat.card.caughtGoal")}</p>
 
           <div className="bg-background rounded-xl p-3 space-y-2 border border-border">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">{t("chat.card.type")}</span>
-              <span className="flex items-center gap-1 text-xs font-medium bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                 <PiggyBank className="h-3 w-3" /> {t("chat.card.goalKind")}
               </span>
             </div>

@@ -58,8 +58,8 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium">{b.category}</span>
                 <span className={cn(
-                  "font-medium",
-                  isDanger ? "text-red-500" : isWarning ? "text-amber-500" : "text-muted-foreground"
+                  "font-medium font-num",
+                  isDanger ? "text-destructive" : isWarning ? "text-warning" : "text-muted-foreground"
                 )}>
                   {formatRupiah(spent)} / {formatRupiah(b.limit_amount)}
                 </span>
@@ -68,11 +68,11 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
                 value={pct}
                 className={cn(
                   "h-1.5",
-                  isDanger ? "[&>div]:bg-red-500" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-primary"
+                  isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-warning" : "[&>div]:bg-positive"
                 )}
               />
               {isDanger && (
-                <p className="text-[10px] text-red-500">{t("budget.warnAlmost")}</p>
+                <p className="text-[10px] text-destructive">{t("budget.warnAlmost")}</p>
               )}
             </div>
           );

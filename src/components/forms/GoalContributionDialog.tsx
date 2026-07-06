@@ -77,13 +77,13 @@ function GoalContributionForm({
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI ? (
               <Sparkles className="h-4 w-4 text-primary" />
             ) : (
-              <PiggyBank className="h-4 w-4 text-violet-600" />
+              <PiggyBank className="h-4 w-4 text-primary" />
             )}
             {fromAI ? t("contribDlg.title.ai") : t("contribDlg.title")}
           </DialogTitle>
@@ -160,7 +160,7 @@ function GoalContributionForm({
               triggerClassName="w-full"
             />
             {insufficient && (
-              <p className="text-xs text-amber-600">{t("contribDlg.notEnough")}</p>
+              <p className="text-xs text-warning">{t("contribDlg.notEnough")}</p>
             )}
           </div>
 

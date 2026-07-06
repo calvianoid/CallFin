@@ -39,15 +39,16 @@ const WALLET_TYPES: { value: WalletType; labelKey: TranslationKey; icon: string 
   { value: "credit", labelKey: "wallets.type.credit", icon: "💳" },
 ];
 
+// Unique swatches — duplicate values would collide as React keys in the picker.
 const COLOR_OPTIONS = [
-  "bg-emerald-500",
+  "bg-primary/100",
   "bg-blue-600",
-  "bg-sky-500",
-  "bg-rose-500",
-  "bg-amber-500",
-  "bg-violet-500",
+  "bg-positive/100",
+  "bg-warning/100",
+  "bg-destructive/100",
   "bg-teal-500",
-  "bg-orange-500",
+  "bg-purple-500",
+  "bg-pink-500",
 ];
 
 export function WalletDialog({ open, onOpenChange, initial }: WalletDialogProps) {
@@ -94,7 +95,7 @@ function WalletForm({ onOpenChange, initial }: Omit<WalletDialogProps, "open">) 
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? t("walletDlg.title.edit") : t("walletDlg.title.add")}</DialogTitle>
           <DialogDescription>{t("walletDlg.desc")}</DialogDescription>

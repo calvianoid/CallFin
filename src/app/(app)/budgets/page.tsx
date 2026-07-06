@@ -18,7 +18,7 @@ import { useTranslation } from "@/lib/i18n/context";
 import { formatMonthLabel } from "@/components/ui/month-picker";
 import { computeBudgetSpent, computeMonthExpenses, computeOtherCategories } from "@/lib/budget-utils";
 
-export default function BudgetsPage() {
+export default function BudgetsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { budgets, deleteBudget, isHydrating, transactions, budgetCap, copyBudgetsFromMonth } = useStore();
   const { t } = useTranslation();
   const currentMonth = getYearMonth();
@@ -76,41 +76,59 @@ export default function BudgetsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold">{t("budget.title")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">{t("budget.subtitle", { month: formatMonthLabel(currentMonth), n: monthBudgets.length })}</p>
+    <div className={cn(embedded ? "space-y-4" : "p-4 sm:p-6 max-w-3xl space-y-5")}>
+      {embedded ? (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            {t("plan.budgetSection")}
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleCopyFromLastMonth} disabled={copyState === "copying"}>
+              <Copy className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{copyState === "copying" ? t("budget.copying") : t("budget.copyFromLastMonth")}</span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={openAdd}>
+              <Plus className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">{t("budget.add")}</span>
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={handleCopyFromLastMonth}
-            disabled={copyState === "copying"}
-          >
-            <Copy className="h-4 w-4" />
-            <span className="hidden sm:inline">
-              {copyState === "copying" ? t("budget.copying") : t("budget.copyFromLastMonth")}
-            </span>
-          </Button>
-          <Button size="sm" className="gap-2" onClick={openAdd}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("budget.add")}</span>
-            <span className="sm:hidden">{t("common.add")}</span>
-          </Button>
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold">{t("budget.title")}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t("budget.subtitle", { month: formatMonthLabel(currentMonth), n: monthBudgets.length })}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={handleCopyFromLastMonth}
+              disabled={copyState === "copying"}
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {copyState === "copying" ? t("budget.copying") : t("budget.copyFromLastMonth")}
+              </span>
+            </Button>
+            <Button size="sm" className="gap-2" onClick={openAdd}>
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{t("budget.add")}</span>
+              <span className="sm:hidden">{t("common.add")}</span>
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {copyState === "copied" && (
-        <p className="text-xs text-green-600">{t("budget.copySuccess", { n: copiedCount })}</p>
+        <p className="text-xs text-positive">{t("budget.copySuccess", { n: copiedCount })}</p>
       )}
       {copyState === "empty" && (
         <p className="text-xs text-muted-foreground">{t("budget.copyEmpty")}</p>
       )}
       {copyState === "error" && (
-        <p className="text-xs text-red-500">{t("budget.copyError")}</p>
+        <p className="text-xs text-destructive">{t("budget.copyError")}</p>
       )}
 
       <Card className="border-border/50 bg-primary/5">
@@ -177,12 +195,12 @@ export default function BudgetsPage() {
                       </Badge>
                     )}
                     {isWarning && (
-                      <Badge className="text-xs bg-amber-100 text-amber-700 gap-1 hover:bg-amber-100">
+                      <Badge className="text-xs bg-warning/10 text-warning gap-1 hover:bg-warning/10">
                         <TrendingDown className="h-3 w-3" /> {t("budget.warningBadge")}
                       </Badge>
                     )}
                     {isGood && (
-                      <Badge className="text-xs bg-green-100 text-green-700 gap-1 hover:bg-green-100">
+                      <Badge className="text-xs bg-positive/10 text-positive gap-1 hover:bg-positive/10">
                         <CheckCircle2 className="h-3 w-3" /> {t("budget.safeBadge")}
                       </Badge>
                     )}
@@ -203,7 +221,7 @@ export default function BudgetsPage() {
                   value={pct}
                   className={cn(
                     "h-2",
-                    isDanger ? "[&>div]:bg-red-500" : isWarning ? "[&>div]:bg-amber-500" : "[&>div]:bg-primary"
+                    isDanger ? "[&>div]:bg-destructive/100" : isWarning ? "[&>div]:bg-warning/100" : "[&>div]:bg-primary"
                   )}
                 />
 
@@ -253,7 +271,7 @@ export default function BudgetsPage() {
                     <Badge variant="secondary" className="text-xs">{t("budget.autoBadge")}</Badge>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className={cn("text-sm font-bold", otherOver && "text-red-500")}>
+                    <span className={cn("text-sm font-bold", otherOver && "text-destructive")}>
                       {other.limit > 0 ? `${otherPct.toFixed(0)}%` : formatRupiah(other.spent)}
                     </span>
                     <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", otherExpanded && "rotate-180")} />
@@ -262,7 +280,7 @@ export default function BudgetsPage() {
 
                 <Progress
                   value={other.limit > 0 ? otherPct : otherOver ? 100 : 0}
-                  className={cn("h-2", otherOver ? "[&>div]:bg-red-500" : "[&>div]:bg-muted-foreground/50")}
+                  className={cn("h-2", otherOver ? "[&>div]:bg-destructive/100" : "[&>div]:bg-muted-foreground/50")}
                 />
 
                 <div className="flex justify-between mt-2 text-xs text-muted-foreground">
@@ -280,7 +298,7 @@ export default function BudgetsPage() {
                     other.breakdown.map((row) => (
                       <div key={row.category} className="flex items-center justify-between text-xs">
                         <span>{row.category}</span>
-                        <span className="font-medium tabular-nums">{formatRupiah(row.spent)}</span>
+                        <span className="font-medium font-num">{formatRupiah(row.spent)}</span>
                       </div>
                     ))
                   )}

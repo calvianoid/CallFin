@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CategoryDialog } from "@/components/forms/CategoryDialog";
+import { TxViewToggle } from "@/components/transactions/TxViewToggle";
 import { useStore } from "@/lib/store";
 import { Category, CategoryType } from "@/types";
-import { Plus, Pencil, Trash2, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Plus, Trash2 } from "lucide-react";
+import { cn, getYearMonth } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function CategoriesPage() {
@@ -17,166 +16,105 @@ export default function CategoriesPage() {
   const { t, locale } = useTranslation();
   const [dialog, setDialog] = useState<{ open: boolean; editing?: Category; defaultType?: CategoryType }>({ open: false });
 
+  const month = getYearMonth();
   const userVisible = categories.filter((c) => !c.isInternal);
   const incomeCats = userVisible.filter((c) => c.type === "income");
   const expenseCats = userVisible.filter((c) => c.type === "expense");
 
-  function openAdd(defaultType: CategoryType) {
-    setDialog({ open: true, defaultType });
-  }
-  function openEdit(c: Category) {
-    setDialog({ open: true, editing: c });
-  }
-
-  function usage(c: Category) {
-    const txCount = transactions.filter((t) => t.category === c.name).length;
-    const budgetCount = budgets.filter((b) => b.category === c.name).length;
-    return { txCount, budgetCount };
-  }
+  const monthTxCount = (name: string) =>
+    transactions.filter((tx) => tx.category === name && tx.date.startsWith(month)).length;
 
   function handleDelete(c: Category) {
-    const u = usage(c);
-    if (u.txCount > 0 || u.budgetCount > 0) {
+    const txCount = transactions.filter((tx) => tx.category === c.name).length;
+    const budgetCount = budgets.filter((b) => b.category === c.name).length;
+    if (txCount > 0 || budgetCount > 0) {
       alert(
         locale === "en"
-          ? `Category "${c.name}" is still in use (${u.txCount} transactions, ${u.budgetCount} budgets). Remove or change them first.`
-          : `Kategori "${c.name}" masih dipakai (${u.txCount} transaksi, ${u.budgetCount} budget). Hapus atau ubah dulu yang pakai kategori ini.`,
+          ? `Category "${c.name}" is still in use (${txCount} transactions, ${budgetCount} budgets). Remove or change them first.`
+          : `Kategori "${c.name}" masih dipakai (${txCount} transaksi, ${budgetCount} budget). Hapus atau ubah dulu.`,
       );
       return;
     }
-    if (c.isDefault) {
-      const msg = locale === "en"
-        ? `Delete default category "${c.name}"? You can re-add it later.`
-        : `Hapus kategori default "${c.name}"? Bisa kamu tambahkan lagi nanti.`;
-      if (!confirm(msg)) return;
-    }
+    if (c.isDefault && !confirm(locale === "en" ? `Delete default category "${c.name}"?` : `Hapus kategori default "${c.name}"?`)) return;
     deleteCategory(c.id);
   }
 
-  function renderCategory(c: Category) {
-    const u = usage(c);
-    const inUse = u.txCount > 0 || u.budgetCount > 0;
+  function CategoryCard({ c }: { c: Category }) {
+    const n = monthTxCount(c.name);
     return (
       <div
-        key={c.id}
-        className="flex items-center gap-3 p-3 rounded-xl border border-border hover:bg-muted/40 transition-colors"
+        onClick={() => setDialog({ open: true, editing: c })}
+        className="group relative flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 cursor-pointer hover:border-border/80 hover:bg-muted/30 transition-colors"
       >
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0", c.color)}>
+        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0", c.color)}>
           {c.icon}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <p className="font-semibold truncate">{c.name}</p>
-            {c.isDefault && <Badge variant="outline" className="text-[10px] h-4 px-1.5">{t("cat.default")}</Badge>}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {u.txCount > 0 && <span>{u.txCount} {t("nav.transactions").toLowerCase()}</span>}
-            {u.txCount > 0 && u.budgetCount > 0 && <span> · </span>}
-            {u.budgetCount > 0 && <span>{u.budgetCount} {t("nav.budgets").toLowerCase()}</span>}
-            {!inUse && <span>{t("cat.unused")}</span>}
+          <p className="text-sm font-medium truncate">{c.name}</p>
+          <p className={cn("text-xs truncate", c.isDefault ? "text-muted-foreground" : "text-primary")}>
+            {c.isDefault ? t("cat.txThisMonth", { n }) : t("cat.customTx", { n })}
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            onClick={() => handleDelete(c)}
-            title={inUse ? t("cat.deleteInUse") : t("cat.deleteOne")}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(c);
+          }}
+          className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+          title={t("cat.deleteOne")}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  function Section({ label, cats, type }: { label: string; cats: Category[]; type: CategoryType }) {
+    return (
+      <div className="space-y-3">
+        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+        {isHydrating && cats.length === 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-[68px] rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+            {cats.map((c) => (
+              <CategoryCard key={c.id} c={c} />
+            ))}
+            <button
+              onClick={() => setDialog({ open: true, defaultType: type })}
+              className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border p-3.5 min-h-[68px] text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="text-[11px]">{t("common.add")}</span>
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl space-y-5">
-      <div>
-        <h1 className="text-lg sm:text-xl font-bold">{t("cat.title")}</h1>
-        <p className="text-xs sm:text-sm text-muted-foreground">{t("cat.subtitle", { n: userVisible.length })}</p>
+    <div className="p-4 sm:p-6 max-w-6xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{t("nav.transactions")}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t("cat.catalogSubtitle", { n: userVisible.length })}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <TxViewToggle active="categories" />
+          <Button size="sm" className="gap-2" onClick={() => setDialog({ open: true, defaultType: "expense" })}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("cat.addCategory")}</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/40 rounded-lg p-3">
-        <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-        <p>{t("cat.info")}</p>
-      </div>
-
-      {/* Expense */}
-      <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 gap-2">
-          <div className="min-w-0">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-red-500" />
-              {t("cat.expense")}
-            </CardTitle>
-            <CardDescription>{t("cat.count", { n: expenseCats.length })}</CardDescription>
-          </div>
-          <Button size="sm" className="gap-1 shrink-0" onClick={() => openAdd("expense")}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("common.add")}</span>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isHydrating && expenseCats.length === 0 ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border">
-                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3.5 w-24" />
-                  <Skeleton className="h-2.5 w-32" />
-                </div>
-                <Skeleton className="h-8 w-8 rounded" />
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
-            ))
-          ) : expenseCats.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">{t("cat.emptyExpense")}</p>
-          ) : (
-            expenseCats.map(renderCategory)
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Income */}
-      <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 gap-2">
-          <div className="min-w-0">
-            <CardTitle className="text-base flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-green-600" />
-              {t("cat.income")}
-            </CardTitle>
-            <CardDescription>{t("cat.count", { n: incomeCats.length })}</CardDescription>
-          </div>
-          <Button size="sm" className="gap-1 shrink-0" onClick={() => openAdd("income")}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">{t("common.add")}</span>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {isHydrating && incomeCats.length === 0 ? (
-            Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-border">
-                <Skeleton className="h-10 w-10 rounded-xl shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <Skeleton className="h-3.5 w-24" />
-                  <Skeleton className="h-2.5 w-32" />
-                </div>
-                <Skeleton className="h-8 w-8 rounded" />
-                <Skeleton className="h-8 w-8 rounded" />
-              </div>
-            ))
-          ) : incomeCats.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">{t("cat.emptyIncome")}</p>
-          ) : (
-            incomeCats.map(renderCategory)
-          )}
-        </CardContent>
-      </Card>
+      <Section label={t("tx.tab.expense")} cats={expenseCats} type="expense" />
+      <Section label={t("tx.tab.income")} cats={incomeCats} type="income" />
 
       <CategoryDialog
         open={dialog.open}

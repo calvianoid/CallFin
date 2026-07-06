@@ -124,7 +124,7 @@ export function WelcomeOnboarding() {
                     className={cn(
                       "flex items-center justify-center w-8 h-8 rounded-full transition-all",
                       done
-                        ? "bg-green-500 text-white"
+                        ? "bg-positive/100 text-white"
                         : isCurrent
                           ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
                           : "bg-muted text-muted-foreground"
@@ -133,7 +133,7 @@ export function WelcomeOnboarding() {
                     {done ? <CheckCircle2 className="h-4 w-4" /> : <s.icon className="h-3.5 w-3.5" />}
                   </div>
                   {i < STEPS.length - 1 && (
-                    <div className={cn("w-6 h-0.5", done ? "bg-green-500" : "bg-muted")} />
+                    <div className={cn("w-6 h-0.5", done ? "bg-positive/100" : "bg-muted")} />
                   )}
                 </div>
               );
@@ -159,10 +159,10 @@ export function WelcomeOnboarding() {
             <div className="bg-muted rounded-xl p-4 flex items-center gap-3">
               <div className={cn(
                 "w-12 h-12 rounded-xl flex items-center justify-center shrink-0",
-                stepDone ? "bg-green-100" : "bg-primary/10"
+                stepDone ? "bg-positive/10" : "bg-primary/10"
               )}>
                 {stepDone ? (
-                  <CheckCircle2 className="h-6 w-6 text-green-600" />
+                  <CheckCircle2 className="h-6 w-6 text-positive" />
                 ) : (
                   <currentStep.icon className="h-6 w-6 text-primary" />
                 )}
@@ -170,7 +170,7 @@ export function WelcomeOnboarding() {
               <div className="text-sm">
                 {stepDone ? (
                   <>
-                    <p className="font-semibold text-green-700 dark:text-green-400">✓ Selesai!</p>
+                    <p className="font-semibold text-positive">✓ Selesai!</p>
                     <p className="text-xs text-muted-foreground">Lanjut ke step berikutnya.</p>
                   </>
                 ) : (

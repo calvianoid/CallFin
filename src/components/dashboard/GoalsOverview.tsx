@@ -56,10 +56,10 @@ export function GoalsOverview({ goals }: GoalsOverviewProps) {
             <div key={g.id} className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium">{g.goal_name}</p>
-                <span className="text-xs font-semibold text-primary">{pct.toFixed(0)}%</span>
+                <span className="text-xs font-semibold text-primary font-num">{pct.toFixed(0)}%</span>
               </div>
               <Progress value={pct} className="h-2 [&>div]:bg-primary" />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[10px] text-muted-foreground font-num">
                 <span>
                   {formatRupiah(g.current_amount)} {locale === "en" ? "of" : "dari"} {formatRupiah(g.target_amount)}
                 </span>
