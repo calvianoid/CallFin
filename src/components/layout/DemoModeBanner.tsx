@@ -41,7 +41,7 @@ export function DemoModeBanner() {
       className={cn(
         "relative w-full flex items-start gap-2 px-3 sm:px-4 py-2",
         "bg-warning/10 text-warning border-b border-warning/30",
-        ""
+        "no-print"
       )}
     >
       <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />

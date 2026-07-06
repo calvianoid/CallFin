@@ -174,27 +174,24 @@
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
-   Print styles — used by the Reports "Export PDF" button via window.print().
-   Strips chrome (sidebar, mobile header, action buttons) and forces a clean
-   black-on-white layout so the user gets a tidy PDF from the browser print
-   dialog.
+   Print styles — the Reports "Export PDF" button (window.print()) prints a
+   dedicated STRUCTURED document (.print-report: header + data tables), NOT a
+   screenshot of the dashboard. Everything else on screen is hidden.
    ─────────────────────────────────────────────────────────────────────────── */
 @media print {
-  /* Hide app chrome */
-  aside,
-  header,
-  .no-print,
-  [data-radix-popper-content-wrapper] {
-    display: none !important;
+  @page {
+    margin: 14mm 12mm;
+    size: A4;
   }
 
-  /* CRITICAL — undo the app shell's viewport-bound scroll container so the
-     document flows naturally and the browser can paginate. Without this the
-     print captures only one viewport-height of content. */
+  /* Undo the app shell's viewport-bound scroll so the document paginates
+     naturally instead of clipping to one viewport height. */
   html,
   body {
     height: auto !important;
     overflow: visible !important;
+    background: #fff !important;
+    color: #000 !important;
   }
   .h-screen,
   .h-full,
@@ -209,70 +206,92 @@
   .overflow-x-auto {
     overflow: visible !important;
   }
-  /* Convert the flex shell into a stacking flow so content paginates */
   body > div,
   main,
   main > div {
     display: block !important;
     flex: none !important;
-  }
-
-  /* Reset background to white & remove all dark variants */
-  html,
-  body,
-  main,
-  .bg-background,
-  .bg-card,
-  .bg-popover,
-  .bg-muted,
-  .bg-sidebar {
-    background: white !important;
-    color: black !important;
-  }
-
-  /* Cards: no shadow, thin border, avoid breaking across pages */
-  [data-slot="card"],
-  .border,
-  .border-border,
-  .border-border\/50 {
-    background: white !important;
-    color: black !important;
-    box-shadow: none !important;
-    border: 1px solid #e5e7eb !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Make main full width */
-  main,
-  main > div,
-  .max-w-3xl,
-  .max-w-5xl {
     max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
   }
 
-  /* Show the print-only header (h2 with .print-only) */
-  .print-only {
+  /* Hide app chrome + all interactive UI — only .print-report prints.
+     (Tailwind's `print:hidden` on the on-screen report body handles the rest.) */
+  aside,
+  nav,
+  header,
+  .no-print,
+  [data-radix-popper-content-wrapper] {
+    display: none !important;
+  }
+
+  /* ─ The structured report document ─ */
+  .print-report {
     display: block !important;
-  }
-
-  /* Slightly smaller text for density */
-  body {
+    color: #000;
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
     font-size: 11px;
+    line-height: 1.45;
   }
-  h1 { font-size: 20px !important; }
-  h2 { font-size: 16px !important; }
-  h3 { font-size: 14px !important; }
-
-  /* Page setup */
-  @page {
-    margin: 12mm 10mm;
-    size: A4;
+  .print-report .doc-head {
+    border-bottom: 2px solid #111827;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  .print-report h1 {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .print-report h2 {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 18px 0 6px;
+    break-after: avoid;
+  }
+  .print-report .doc-sub {
+    font-size: 11px;
+    color: #6b7280;
+    margin: 2px 0 0;
+  }
+  .print-report table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+  }
+  .print-report thead {
+    display: table-header-group;
+  }
+  .print-report tr {
+    break-inside: avoid;
+  }
+  .print-report th,
+  .print-report td {
+    border: 1px solid #d1d5db;
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .print-report th {
+    background: #f3f4f6;
+    font-weight: 600;
+  }
+  .print-report td.num,
+  .print-report th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .print-report tfoot td {
+    font-weight: 700;
+    background: #f9fafb;
   }
 }
-.print-only {
+
+/* Hidden on screen; shown only when printing (rule above). */
+.print-report {
   display: none;
 }
 

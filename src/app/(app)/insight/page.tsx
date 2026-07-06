@@ -14,7 +14,7 @@ import ReportsPage from "@/app/(app)/reports/page";
 import FreedomPage from "@/app/(app)/freedom/page";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { MonthPicker } from "@/components/ui/month-picker";
+import { MonthPicker, formatMonthLabel } from "@/components/ui/month-picker";
 import { Download } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 import { usePreferences } from "@/lib/preferences";
@@ -48,7 +48,7 @@ function InsightInner() {
   return (
     <div className="p-4 sm:p-6 max-w-6xl space-y-5">
       {/* Header: judul + tab + bulan + export */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="print:hidden flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-semibold tracking-tight">{t("insight.title")}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
@@ -57,7 +57,19 @@ function InsightInner() {
           {activeTab !== "kebebasan" && (
             <>
               <MonthPicker value={month} onChange={setMonth} />
-              <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => window.print()}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 shrink-0"
+                onClick={() => {
+                  const old = document.title;
+                  document.title = `CallFin — ${t("reports.title")} ${formatMonthLabel(month)}`;
+                  window.print();
+                  setTimeout(() => {
+                    document.title = old;
+                  }, 500);
+                }}
+              >
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">{t("reports.export")}</span>
               </Button>
@@ -66,7 +78,7 @@ function InsightInner() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={(v) => setTab(v as Tab)}>
+      <Tabs value={activeTab} onValueChange={(v) => setTab(v as Tab)} className="print:hidden">
         <TabsList className={cn("grid w-full sm:w-fit", showFreedom ? "grid-cols-4" : "grid-cols-3")}>
           <TabsTrigger value="ringkasan" className="px-3 sm:px-4">{t("insight.tabSummary")}</TabsTrigger>
           <TabsTrigger value="kategori" className="px-3 sm:px-4">{t("insight.tabCategory")}</TabsTrigger>

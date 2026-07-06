@@ -39,7 +39,7 @@ export default function ReportsPage({
   month?: string;
   onMonthChange?: (m: string) => void;
 } = {}) {
-  const { transactions, budgets, goals, wallets, isHydrating } = useStore();
+  const { transactions, budgets, goals, wallets, isHydrating, profile } = useStore();
   const { t, locale } = useTranslation();
   const [monthState, setMonthState] = useState(() => getYearMonth());
   const month = monthProp ?? monthState;
@@ -367,17 +367,125 @@ export default function ReportsPage({
 
   return (
     <div className={cn(embedded ? "space-y-5" : "p-4 sm:p-6 max-w-5xl space-y-5")}>
-      {/* Print-only header — visible only when printing */}
-      <div className="print-only mb-3 border-b border-gray-300 pb-2">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-bold text-base">CallFin</p>
-            <p className="text-xs text-gray-600">{t("reports.title")} — {formatMonthLabel(month)}</p>
-          </div>
-          <p className="text-xs text-gray-600">{printedLabel} {todayLabel}</p>
+      {/* ═══════════════════════════════════════════════════════════════════
+          Structured printable report — hidden on screen, the ONLY thing shown
+          when printing / "Export PDF". A real document (tables), not a
+          screenshot of the dashboard UI. See @media print in globals.css.
+          ═══════════════════════════════════════════════════════════════════ */}
+      <div className="print-report">
+        <div className="doc-head">
+          <h1>CallFin</h1>
+          <p className="doc-sub">{t("reports.title")} — {formatMonthLabel(month)}</p>
+          <p className="doc-sub">
+            {printedLabel} {todayLabel}
+            {profile?.full_name ? ` · ${profile.full_name}` : ""}
+          </p>
         </div>
+
+        <h2>{locale === "en" ? "Summary" : "Ringkasan"}</h2>
+        <table>
+          <tbody>
+            <tr><td>{t("reports.income")}</td><td className="num">{formatRupiah(stats.totalIncome)}</td></tr>
+            <tr><td>{t("reports.expense")}</td><td className="num">{formatRupiah(stats.totalExpense)}</td></tr>
+            <tr><td>{t("reports.goalSavings")}</td><td className="num">{formatRupiah(stats.totalSavings)}</td></tr>
+            <tr><td>{locale === "en" ? "Net" : "Net (sisa)"}</td><td className="num">{formatRupiah(stats.net)}</td></tr>
+            <tr><td>{t("reports.savingsRate")}</td><td className="num">{stats.savingsRate.toFixed(0)}%</td></tr>
+            <tr><td>{t("reports.txCount")}</td><td className="num">{stats.inMonth.length}</td></tr>
+            <tr><td>{locale === "en" ? "Active days" : "Hari aktif"}</td><td className="num">{stats.activeDays}</td></tr>
+          </tbody>
+        </table>
+
+        {stats.categoryBreakdown.length > 0 && (
+          <>
+            <h2>{t("reports.byCategory")}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>{locale === "en" ? "Category" : "Kategori"}</th>
+                  <th className="num">{locale === "en" ? "Amount" : "Jumlah"}</th>
+                  <th className="num">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.categoryBreakdown.map((c) => (
+                  <tr key={c.category}>
+                    <td>{c.category}</td>
+                    <td className="num">{formatRupiah(c.amount)}</td>
+                    <td className="num">{((c.amount / stats.totalBreakdown) * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>{locale === "en" ? "Total" : "Total"}</td>
+                  <td className="num">{formatRupiah(stats.totalBreakdown)}</td>
+                  <td className="num">100%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </>
+        )}
+
+        {stats.incomeBreakdown.length > 0 && (
+          <>
+            <h2>{t("reports.incomeByCategory")}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>{locale === "en" ? "Category" : "Kategori"}</th>
+                  <th className="num">{locale === "en" ? "Amount" : "Jumlah"}</th>
+                  <th className="num">%</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.incomeBreakdown.map((c) => (
+                  <tr key={c.category}>
+                    <td>{c.category}</td>
+                    <td className="num">{formatRupiah(c.amount)}</td>
+                    <td className="num">{((c.amount / stats.totalIncome) * 100).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>{locale === "en" ? "Total" : "Total"}</td>
+                  <td className="num">{formatRupiah(stats.totalIncome)}</td>
+                  <td className="num">100%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </>
+        )}
+
+        {stats.walletActivity.length > 0 && (
+          <>
+            <h2>{t("reports.walletActivity")}</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>{locale === "en" ? "Wallet" : "Dompet"}</th>
+                  <th className="num">{locale === "en" ? "In" : "Masuk"}</th>
+                  <th className="num">{locale === "en" ? "Out" : "Keluar"}</th>
+                  <th className="num">Net</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.walletActivity.map((w, i) => (
+                  <tr key={i}>
+                    <td>{w.name}</td>
+                    <td className="num">{formatRupiah(w.in)}</td>
+                    <td className="num">{formatRupiah(w.out)}</td>
+                    <td className="num">{formatRupiah(w.net)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
 
+      {/* ── On-screen interactive UI (hidden when printing) ── */}
+      <div className="print:hidden space-y-5">
       {!embedded && (
         <>
           <div className="flex items-center justify-between gap-3 no-print">
@@ -742,6 +850,7 @@ export default function ReportsPage({
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }
