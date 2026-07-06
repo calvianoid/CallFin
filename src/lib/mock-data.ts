@@ -9,11 +9,11 @@ import { getYearMonth } from "@/lib/utils";
  * compute realistic annual figures.
  */
 export const mockWallets: Wallet[] = [
-  { id: "w1", user_id: "u1", name: "Tunai", type: "cash", balance: 1500000, color: "bg-emerald-500", icon: "💵" },
-  { id: "w2", user_id: "u1", name: "BCA", type: "bank", balance: 47000000, color: "bg-blue-600", icon: "🏦" },
-  { id: "w5", user_id: "u1", name: "Investasi", type: "bank", balance: 215000000, color: "bg-violet-500", icon: "📈" },
-  { id: "w3", user_id: "u1", name: "GoPay", type: "ewallet", balance: 800000, color: "bg-sky-500", icon: "📱" },
-  { id: "w4", user_id: "u1", name: "Kartu Kredit", type: "credit", balance: -3200000, color: "bg-rose-500", icon: "💳" },
+  { id: "w2", user_id: "u1", name: "BCA", type: "bank", balance: 47000000, color: "bg-blue-600", icon: "🏦", account_number: "4821" },
+  { id: "w1", user_id: "u1", name: "Tunai", type: "cash", balance: 1500000, color: "bg-positive/100", icon: "💵", subtitle: "Cash" },
+  { id: "w5", user_id: "u1", name: "Investasi", type: "bank", balance: 215000000, color: "bg-primary/100", icon: "📈", subtitle: "Portofolio" },
+  { id: "w3", user_id: "u1", name: "GoPay", type: "ewallet", balance: 800000, color: "bg-primary/100", icon: "📱", subtitle: "E-Wallet" },
+  { id: "w4", user_id: "u1", name: "Kartu Kredit", type: "credit", balance: -3200000, color: "bg-destructive/100", icon: "💳", account_number: "7710" },
 ];
 
 // 12 months ending at the *current* month, computed relative to today so the
@@ -104,6 +104,26 @@ function buildMockTransactions(): Transaction[] {
     if (i === 10) push("w2", "expense", 2500000, "Education", "Kursus online & buku", 19, ym);
   });
 
+  // ── Transfers between wallets (current month) — power the "Transfer
+  //    terakhir" panel on the Dompet page. Given their own type + destination. ──
+  const cm = PERSONA_MONTHS[PERSONA_MONTHS.length - 1];
+  const pushTransfer = (from: string, to: string, amount: number, note: string, day: number) => {
+    out.push({
+      id: String(n++),
+      user_id: "u1",
+      wallet_id: from,
+      transfer_to_wallet_id: to,
+      type: "transfer",
+      amount,
+      category: "Transfer",
+      description: note,
+      date: `${cm}-${String(day).padStart(2, "0")}`,
+    });
+  };
+  pushTransfer("w2", "w3", 1000000, "Top up e-wallet", 1);
+  pushTransfer("w2", "w1", 500000, "Tarik tunai", 3);
+  pushTransfer("w2", "w4", 2100000, "Bayar tagihan kartu", 6);
+
   // Newest first, to match how the app sorts.
   return out.reverse();
 }
@@ -145,19 +165,21 @@ export function formatRupiah(amount: number): string {
   }).format(amount);
 }
 
+// Unique swatches — duplicate values would collide as React keys in the
+// CategoryDialog color picker (key={c}).
 export const CATEGORY_COLOR_OPTIONS = [
-  "bg-orange-100 text-orange-700",
+  "bg-warning/10 text-warning",
   "bg-blue-100 text-blue-700",
-  "bg-purple-100 text-purple-700",
-  "bg-red-100 text-red-700",
+  "bg-primary/10 text-primary",
+  "bg-destructive/10 text-destructive",
   "bg-pink-100 text-pink-700",
-  "bg-green-100 text-green-700",
+  "bg-positive/10 text-positive",
   "bg-teal-100 text-teal-700",
-  "bg-emerald-100 text-emerald-700",
+  "bg-lime-100 text-lime-700",
   "bg-cyan-100 text-cyan-700",
   "bg-indigo-100 text-indigo-700",
   "bg-violet-100 text-violet-700",
-  "bg-amber-100 text-amber-700",
+  "bg-fuchsia-100 text-fuchsia-700",
 ];
 
 /**
@@ -168,67 +190,67 @@ export const CATEGORY_COLOR_OPTIONS = [
  */
 export const DEFAULT_CATEGORIES: Omit<Category, "id" | "user_id">[] = [
   // ─── Income (8) ────────────────────────────────────────────────────────────
-  { name: "Salary",              type: "income", color: "bg-emerald-100 text-emerald-700", icon: "💼", isDefault: true },
-  { name: "Bonus",               type: "income", color: "bg-green-100 text-green-700",     icon: "🎁", isDefault: true },
+  { name: "Salary",              type: "income", color: "bg-positive/10 text-positive", icon: "💼", isDefault: true },
+  { name: "Bonus",               type: "income", color: "bg-positive/10 text-positive",     icon: "🎁", isDefault: true },
   { name: "Freelance",           type: "income", color: "bg-cyan-100 text-cyan-700",       icon: "💻", isDefault: true },
-  { name: "Interest Income",     type: "income", color: "bg-amber-100 text-amber-700",     icon: "💸", isDefault: true },
+  { name: "Interest Income",     type: "income", color: "bg-warning/10 text-warning",     icon: "💸", isDefault: true },
   { name: "Reimbursement",       type: "income", color: "bg-teal-100 text-teal-700",       icon: "🔄", isDefault: true },
-  { name: "Angpau",              type: "income", color: "bg-red-100 text-red-700",         icon: "🧧", isDefault: true },
+  { name: "Angpau",              type: "income", color: "bg-destructive/10 text-destructive",         icon: "🧧", isDefault: true },
   { name: "Loan Received",       type: "income", color: "bg-blue-100 text-blue-700",       icon: "🏦", isDefault: true },
   { name: "Other Income",        type: "income", color: "bg-gray-100 text-gray-700",       icon: "📥", isDefault: true },
 
   // ─── Expense — daily (6) ───────────────────────────────────────────────────
-  { name: "Food & Drinks",       type: "expense", color: "bg-orange-100 text-orange-700",  icon: "🍔", isDefault: true },
+  { name: "Food & Drinks",       type: "expense", color: "bg-warning/10 text-warning",  icon: "🍔", isDefault: true },
   { name: "Transportation",      type: "expense", color: "bg-blue-100 text-blue-700",      icon: "🚗", isDefault: true },
-  { name: "Fuel",                type: "expense", color: "bg-amber-100 text-amber-700",    icon: "⛽", isDefault: true },
-  { name: "Parking",             type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🅿️", isDefault: true },
+  { name: "Fuel",                type: "expense", color: "bg-warning/10 text-warning",    icon: "⛽", isDefault: true },
+  { name: "Parking",             type: "expense", color: "bg-warning/10 text-warning",  icon: "🅿️", isDefault: true },
   { name: "Shopping",            type: "expense", color: "bg-pink-100 text-pink-700",      icon: "🛍️", isDefault: true },
-  { name: "Clothing & Accessories",type: "expense", color: "bg-rose-100 text-rose-700",    icon: "👕", isDefault: true },
+  { name: "Clothing & Accessories",type: "expense", color: "bg-destructive/10 text-destructive",    icon: "👕", isDefault: true },
 
   // ─── Expense — bills & utilities (10) ──────────────────────────────────────
   { name: "Rent",                type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🏠", isDefault: true },
-  { name: "Water Bill",          type: "expense", color: "bg-sky-100 text-sky-700",        icon: "💧", isDefault: true },
-  { name: "Electricity Bill",    type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "⚡", isDefault: true },
+  { name: "Water Bill",          type: "expense", color: "bg-primary/10 text-primary",        icon: "💧", isDefault: true },
+  { name: "Electricity Bill",    type: "expense", color: "bg-warning/10 text-warning",  icon: "⚡", isDefault: true },
   { name: "Internet Bill",       type: "expense", color: "bg-cyan-100 text-cyan-700",      icon: "🌐", isDefault: true },
   { name: "Phone & Mobile",      type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📞", isDefault: true },
-  { name: "Other Bills",         type: "expense", color: "bg-red-100 text-red-700",        icon: "📄", isDefault: true },
-  { name: "BPJS",                type: "expense", color: "bg-emerald-100 text-emerald-700",icon: "🏛️", isDefault: true },
+  { name: "Other Bills",         type: "expense", color: "bg-destructive/10 text-destructive",        icon: "📄", isDefault: true },
+  { name: "BPJS",                type: "expense", color: "bg-positive/10 text-positive",icon: "🏛️", isDefault: true },
   { name: "Insurance",           type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🛡️", isDefault: true },
   { name: "App Subscriptions",   type: "expense", color: "bg-indigo-100 text-indigo-700",  icon: "📱", isDefault: true },
   { name: "Admin Fees",          type: "expense", color: "bg-slate-100 text-slate-700",    icon: "🧾", isDefault: true },
 
   // ─── Expense — home & vehicle (6) ──────────────────────────────────────────
-  { name: "Home Maintenance",    type: "expense", color: "bg-amber-100 text-amber-700",    icon: "🔧", isDefault: true },
+  { name: "Home Maintenance",    type: "expense", color: "bg-warning/10 text-warning",    icon: "🔧", isDefault: true },
   { name: "Vehicle Maintenance", type: "expense", color: "bg-zinc-100 text-zinc-700",      icon: "🚙", isDefault: true },
   { name: "Furniture",           type: "expense", color: "bg-stone-100 text-stone-700",    icon: "🛋️", isDefault: true },
   { name: "Household Help",      type: "expense", color: "bg-teal-100 text-teal-700",      icon: "🧹", isDefault: true },
-  { name: "Laundry",             type: "expense", color: "bg-sky-100 text-sky-700",        icon: "🧺", isDefault: true },
+  { name: "Laundry",             type: "expense", color: "bg-primary/10 text-primary",        icon: "🧺", isDefault: true },
   { name: "Security",            type: "expense", color: "bg-neutral-100 text-neutral-700",icon: "🔒", isDefault: true },
 
   // ─── Expense — health, family, personal (8) ────────────────────────────────
-  { name: "Healthcare",          type: "expense", color: "bg-green-100 text-green-700",    icon: "🏥", isDefault: true },
+  { name: "Healthcare",          type: "expense", color: "bg-positive/10 text-positive",    icon: "🏥", isDefault: true },
   { name: "Fitness",             type: "expense", color: "bg-lime-100 text-lime-700",      icon: "🏋️", isDefault: true },
   { name: "Cosmetics",           type: "expense", color: "bg-pink-100 text-pink-700",      icon: "💄", isDefault: true },
-  { name: "Haircut",             type: "expense", color: "bg-orange-100 text-orange-700",  icon: "✂️", isDefault: true },
+  { name: "Haircut",             type: "expense", color: "bg-warning/10 text-warning",  icon: "✂️", isDefault: true },
   { name: "Education",           type: "expense", color: "bg-blue-100 text-blue-700",      icon: "📚", isDefault: true },
-  { name: "Family",              type: "expense", color: "bg-rose-100 text-rose-700",      icon: "👨‍👩‍👧", isDefault: true },
-  { name: "Pets",                type: "expense", color: "bg-yellow-100 text-yellow-700",  icon: "🐶", isDefault: true },
+  { name: "Family",              type: "expense", color: "bg-destructive/10 text-destructive",      icon: "👨‍👩‍👧", isDefault: true },
+  { name: "Pets",                type: "expense", color: "bg-warning/10 text-warning",  icon: "🐶", isDefault: true },
   { name: "Gifts & Donations",   type: "expense", color: "bg-fuchsia-100 text-fuchsia-700",icon: "🎁", isDefault: true },
 
   // ─── Expense — entertainment (2) ───────────────────────────────────────────
-  { name: "Entertainment",       type: "expense", color: "bg-purple-100 text-purple-700",  icon: "🎬", isDefault: true },
+  { name: "Entertainment",       type: "expense", color: "bg-primary/10 text-primary",  icon: "🎬", isDefault: true },
   { name: "Games",               type: "expense", color: "bg-indigo-100 text-indigo-700",  icon: "🎮", isDefault: true },
 
   // ─── Expense — finance (3) ─────────────────────────────────────────────────
-  { name: "Investment",          type: "expense", color: "bg-emerald-100 text-emerald-700",icon: "📈", isDefault: true },
-  { name: "Pay Interest",        type: "expense", color: "bg-amber-100 text-amber-700",    icon: "💸", isDefault: true },
-  { name: "Pay Debt",            type: "expense", color: "bg-red-100 text-red-700",        icon: "💳", isDefault: true },
+  { name: "Investment",          type: "expense", color: "bg-positive/10 text-positive",icon: "📈", isDefault: true },
+  { name: "Pay Interest",        type: "expense", color: "bg-warning/10 text-warning",    icon: "💸", isDefault: true },
+  { name: "Pay Debt",            type: "expense", color: "bg-destructive/10 text-destructive",        icon: "💳", isDefault: true },
 
   // ─── Expense — misc (1) ────────────────────────────────────────────────────
   { name: "Other Expense",       type: "expense", color: "bg-gray-100 text-gray-700",      icon: "📌", isDefault: true },
 
   // ─── Internal — used by Goal contributions, hidden from manual pickers ─────
-  { name: "Savings",             type: "expense", color: "bg-violet-100 text-violet-700",  icon: "🐷", isDefault: true, isInternal: true },
+  { name: "Savings",             type: "expense", color: "bg-primary/10 text-primary",  icon: "🐷", isDefault: true, isInternal: true },
 ];
 
 /** Look up a category's color + icon by name from a list of categories. Falls back to gray. */

@@ -16,7 +16,7 @@ import { id, enUS } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 
-export default function GoalsPage() {
+export default function GoalsPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { goals, deleteGoal, isHydrating } = useStore();
   const { t, locale } = useTranslation();
   const dateLocale = locale === "en" ? enUS : id;
@@ -35,18 +35,30 @@ export default function GoalsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold">{t("goals.title")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">{t("goals.subtitle", { n: goals.length })}</p>
+    <div className={cn(embedded ? "space-y-4" : "p-4 sm:p-6 max-w-3xl space-y-5")}>
+      {embedded ? (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            {t("plan.goalsSection")}
+          </p>
+          <Button size="sm" className="h-8 gap-1.5 text-xs shrink-0" onClick={openAdd}>
+            <Plus className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{t("goals.add")}</span>
+          </Button>
         </div>
-        <Button size="sm" className="gap-2 shrink-0" onClick={openAdd}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("goals.add")}</span>
-          <span className="sm:hidden">{t("common.add")}</span>
-        </Button>
-      </div>
+      ) : (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold">{t("goals.title")}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t("goals.subtitle", { n: goals.length })}</p>
+          </div>
+          <Button size="sm" className="gap-2 shrink-0" onClick={openAdd}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("goals.add")}</span>
+            <span className="sm:hidden">{t("common.add")}</span>
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4">
         {isHydrating && goals.length === 0 ? (
@@ -122,7 +134,7 @@ export default function GoalsPage() {
                       </div>
                       <span className={cn(
                         "font-medium",
-                        daysLeft <= 30 ? "text-red-500" : daysLeft <= 90 ? "text-amber-500" : "text-green-600"
+                        daysLeft <= 30 ? "text-destructive" : daysLeft <= 90 ? "text-warning" : "text-positive"
                       )}>
                         {daysLeft > 0 ? t("goals.daysLeft", { n: daysLeft }) : t("goals.overdue")}
                       </span>

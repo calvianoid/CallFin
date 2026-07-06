@@ -4,6 +4,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Instrument-style numeric readout: JetBrains Mono + tabular digits */
+@utility font-num {
+  font-family: var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
 @utility no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -15,6 +22,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-positive: var(--positive);
+  --color-warning: var(--warning);
   --font-sans: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-mono: var(--font-mono), ui-monospace, "SFMono-Regular", Menlo, monospace;
   --font-heading: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
@@ -90,40 +99,46 @@
   --sidebar-accent-foreground: oklch(0.623 0.214 259.815);
   --sidebar-border: oklch(0.922 0.004 264.542);
   --sidebar-ring: oklch(0.623 0.214 259.815);
+  --positive: oklch(0.638 0.196 148.042);
+  --warning: oklch(0.681 0.162 75.834);
 }
 
+/* Revamp: "instrument black" cockpit theme — near-black neutral surfaces,
+   one blue accent, green/red reserved for income/expense semantics. */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.178 0.004 264.542);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.178 0.004 264.542);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.623 0.214 259.815);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.232 0.008 264.542);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.232 0.008 264.542);
-  --muted-foreground: oklch(0.619 0.012 264.938);
-  --accent: oklch(0.232 0.008 264.542);
-  --accent-foreground: oklch(0.623 0.214 259.815);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.623 0.214 259.815);
-  --chart-1: oklch(0.623 0.214 259.815);
-  --chart-2: oklch(0.638 0.196 148.042);
-  --chart-3: oklch(0.563 0.182 24.422);
-  --chart-4: oklch(0.719 0.161 68.023);
-  --chart-5: oklch(0.72 0.149 304.543);
-  --sidebar: oklch(0.178 0.004 264.542);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.232 0.008 264.542);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.623 0.214 259.815);
+  --background: #0b0c0e;
+  --foreground: #f2f3f5;
+  --card: #15171c;
+  --card-foreground: #f2f3f5;
+  --popover: #15171c;
+  --popover-foreground: #f2f3f5;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #1e2128;
+  --secondary-foreground: #f2f3f5;
+  --muted: #1e2128;
+  --muted-foreground: #8a8f98;
+  --accent: #1e2128;
+  --accent-foreground: #f2f3f5;
+  --destructive: #ff5c5c;
+  --border: #262a31;
+  --input: #262a31;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #45d483;
+  --chart-3: #ff5c5c;
+  --chart-4: #ffb020;
+  --chart-5: #60a5fa;
+  --sidebar: #0b0c0e;
+  --sidebar-foreground: #f2f3f5;
+  --sidebar-primary: #2563eb;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e2128;
+  --sidebar-accent-foreground: #f2f3f5;
+  --sidebar-border: #262a31;
+  --sidebar-ring: #2563eb;
+  --positive: #45d483;
+  --warning: #ffb020;
 }
 
 @layer base {

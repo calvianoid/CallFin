@@ -101,7 +101,7 @@ export function ChangePasswordForm() {
       </div>
       <div className="flex items-center justify-end gap-3 pt-2">
         {state === "saved" && (
-          <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+          <span className="flex items-center gap-1 text-xs text-positive">
             <Check className="h-3.5 w-3.5" /> {t("settings.passwordUpdated")}
           </span>
         )}

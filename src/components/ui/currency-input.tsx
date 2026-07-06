@@ -49,7 +49,7 @@ export function CurrencyInput({
       {...props}
       type="text"
       inputMode="numeric"
-      className={cn("tabular-nums", className)}
+      className={cn("font-num", className)}
       value={formatWithSeparator(value)}
       onChange={handleChange}
     />

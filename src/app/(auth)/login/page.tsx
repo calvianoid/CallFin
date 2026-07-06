@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, Loader2, MailCheck } from "lucide-react";
+import { TrendingUp, Loader2, MailCheck, Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 
 export default function LoginPage() {
@@ -28,6 +28,7 @@ function LoginForm() {
   const confirmEmail = searchParams.get("confirm");
   const [email, setEmail] = useState(confirmEmail ?? "");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
@@ -70,12 +71,12 @@ function LoginForm() {
 
   return (
     <Card className="w-full max-w-md shadow-xl border-border/50">
-      <CardHeader className="space-y-3 text-center pb-6">
-        <div className="flex justify-center">
-          <div className="flex items-center gap-2 bg-primary/10 rounded-2xl px-4 py-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl text-primary">CallFin</span>
+      <CardHeader className="space-y-4 pb-6">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary">
+            <TrendingUp className="h-5 w-5 text-primary-foreground" />
           </div>
+          <span className="font-bold text-lg">CallFin</span>
         </div>
         <div>
           <CardTitle className="text-2xl">{t("auth.signInTitle")}</CardTitle>
@@ -116,14 +117,26 @@ function LoginForm() {
                 {t("auth.forgotPassword")}
               </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("auth.signIn")}

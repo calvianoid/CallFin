@@ -73,9 +73,11 @@ export default function RegisterPage() {
     <Card className="w-full max-w-md shadow-xl border-border/50">
       <CardHeader className="space-y-3 text-center pb-6">
         <div className="flex justify-center">
-          <div className="flex items-center gap-2 bg-primary/10 rounded-2xl px-4 py-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl text-primary">CallFin</span>
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary">
+              <TrendingUp className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-lg">CallFin</span>
           </div>
         </div>
         <div>

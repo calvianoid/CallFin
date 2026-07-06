@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 const RATE_OPTIONS = [3, 3.5, 4]; // %
 
-export default function FreedomPage() {
+export default function FreedomPage({ embedded = false }: { embedded?: boolean } = {}) {
   const { transactions, wallets, goals, isHydrating } = useStore();
   const { t, locale } = useTranslation();
 
@@ -47,7 +47,7 @@ export default function FreedomPage() {
 
   if (isHydrating && transactions.length === 0) {
     return (
-      <div className="p-4 sm:p-6 max-w-3xl space-y-5">
+      <div className={cn(embedded ? "space-y-5" : "p-4 sm:p-6 max-w-3xl space-y-5")}>
         <Skeleton className="h-8 w-64" />
         <Skeleton className="h-32 rounded-xl" />
         <Skeleton className="h-40 rounded-xl" />
@@ -57,22 +57,24 @@ export default function FreedomPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary/10 shrink-0">
-          <Rocket className="h-5 w-5 text-primary" />
+    <div className={cn(embedded ? "space-y-5" : "p-4 sm:p-6 max-w-3xl space-y-5")}>
+      {/* Header — hidden when embedded (Insight wrapper provides the title) */}
+      {!embedded && (
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-primary/10 shrink-0">
+            <Rocket className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold">{t("fire.title")}</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">{t("fire.subtitle")}</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg sm:text-xl font-bold">{t("fire.title")}</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">{t("fire.subtitle")}</p>
-        </div>
-      </div>
+      )}
 
       {/* Data note */}
       <div className={cn(
         "flex items-start gap-2 text-xs rounded-lg p-3",
-        hasData ? "bg-primary/5 text-muted-foreground" : "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300",
+        hasData ? "bg-primary/5 text-muted-foreground" : "bg-warning/10 text-warning",
       )}>
         <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
         <span>{hasData ? t("fire.dataNote", { months: derived.monthsOfData }) : t("fire.noData")}</span>
@@ -110,7 +112,7 @@ export default function FreedomPage() {
               <Rocket className="h-3.5 w-3.5 text-primary" />
               {t("fire.heroLabel")}
             </div>
-            <p className="text-2xl font-extrabold tabular-nums text-primary leading-tight">
+            <p className="text-2xl font-extrabold font-num text-primary leading-tight">
               {formatRupiah(target)}
             </p>
             <p className="text-[11px] text-muted-foreground mt-1.5">{t("fire.heroHint")}</p>
@@ -120,10 +122,10 @@ export default function FreedomPage() {
         <Card className="border-border/50">
           <CardContent className="p-5">
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <TrendingUp className="h-3.5 w-3.5 text-green-600" />
+              <TrendingUp className="h-3.5 w-3.5 text-positive" />
               {t("fire.passiveIncome")}
             </div>
-            <p className="text-2xl font-extrabold tabular-nums text-green-600 leading-tight">
+            <p className="text-2xl font-extrabold font-num text-positive leading-tight">
               {formatRupiah(passive)}
               <span className="text-sm font-medium text-muted-foreground">/{locale === "en" ? "mo" : "bln"}</span>
             </p>
@@ -144,11 +146,11 @@ export default function FreedomPage() {
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">{t("fire.goalProgressHint")}</p>
               </div>
-              <span className="text-sm font-bold text-primary tabular-nums shrink-0">{(progress * 100).toFixed(1)}%</span>
+              <span className="text-sm font-bold text-primary font-num shrink-0">{(progress * 100).toFixed(1)}%</span>
             </div>
             <Progress value={progress * 100} className="h-3 [&>div]:bg-primary" />
             <div className="flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground tabular-nums">
+              <p className="text-xs text-muted-foreground font-num">
                 {t("fire.goalOf", { current: formatRupiah(saved), target: formatRupiah(target) })}
               </p>
               <Button variant="outline" size="sm" className="h-7 gap-1 text-xs shrink-0" onClick={() => setContribOpen(true)}>
@@ -174,9 +176,12 @@ export default function FreedomPage() {
         </Card>
       )}
 
-      {/* Minimal controls: monthly expense + withdrawal rate */}
+      {/* Simulasi skenario + Kenapa ×25 — side by side (RD-0) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+      {/* Simulasi skenario: monthly expense + withdrawal rate */}
       <Card className="border-border/50">
-        <CardContent className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+        <CardContent className="p-5 space-y-4">
+          <p className="text-sm font-semibold">{t("fire.simTitle")}</p>
           <div className="space-y-1.5">
             <Label className="text-xs flex items-center gap-1">
               <Calculator className="h-3 w-3" /> {t("fire.stepMonthly")}
@@ -209,7 +214,7 @@ export default function FreedomPage() {
                   type="button"
                   onClick={() => setWithdrawalPct(r)}
                   className={cn(
-                    "flex-1 h-9 rounded-lg text-sm font-medium border transition-colors tabular-nums",
+                    "flex-1 h-9 rounded-lg text-sm font-medium border transition-colors font-num",
                     withdrawalPct === r
                       ? "bg-primary text-primary-foreground border-primary"
                       : "border-border text-muted-foreground hover:bg-muted",
@@ -231,6 +236,7 @@ export default function FreedomPage() {
           <p className="text-xs text-muted-foreground leading-relaxed">{t("fire.explainBody")}</p>
         </CardContent>
       </Card>
+      </div>
 
       {/* Create a dedicated FIRE goal (prefilled with name + the computed target) */}
       <GoalDialog
@@ -262,7 +268,7 @@ function FlowStep({
     )}>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">{label}</p>
       <p className={cn(
-        "font-bold tabular-nums leading-tight text-sm sm:text-base",
+        "font-bold font-num leading-tight text-sm sm:text-base",
         primary && "text-primary",
       )}>
         {value}
@@ -277,7 +283,7 @@ function FlowOp({ text, highlight }: { text: string; highlight?: boolean }) {
     <div className="flex sm:flex-col items-center justify-center gap-1 px-1 py-1 sm:py-0">
       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground rotate-90 sm:rotate-0" />
       <span className={cn(
-        "text-xs font-bold tabular-nums",
+        "text-xs font-bold font-num",
         highlight ? "text-primary" : "text-muted-foreground",
       )}>
         {text}

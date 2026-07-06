@@ -7,7 +7,7 @@ export interface Category {
   user_id: string;
   name: string;
   type: CategoryType;
-  /** Tailwind class for badge, e.g. "bg-orange-100 text-orange-700" */
+  /** Tailwind class for badge, e.g. "bg-warning/10 text-warning" */
   color: string;
   icon?: string;
   isDefault?: boolean;
@@ -25,6 +25,10 @@ export interface Wallet {
   balance: number;
   color: string;
   icon?: string;
+  /** Optional last-4 digits shown masked on the wallet card (e.g. "4821" → "•••• 4821"). */
+  account_number?: string;
+  /** Optional small-caps sub-label on the wallet card when there's no account number (e.g. "PORTOFOLIO"). */
+  subtitle?: string;
 }
 
 export interface Transaction {

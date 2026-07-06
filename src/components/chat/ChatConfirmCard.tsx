@@ -39,7 +39,7 @@ export function ChatConfirmCard({ parsed, wallet, onConfirm, onEdit, onCancel, d
               <span className="text-xs text-muted-foreground">{t("chat.card.type")}</span>
               <Badge
                 variant="secondary"
-                className={cn("text-xs", parsed.type === "income" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700")}
+                className={cn("text-xs", parsed.type === "income" ? "bg-positive/10 text-positive" : "bg-destructive/10 text-destructive")}
               >
                 {parsed.type === "income" ? t("chat.label.income") : t("chat.label.expense")}
               </Badge>

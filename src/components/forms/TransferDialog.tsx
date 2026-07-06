@@ -88,7 +88,7 @@ function TransferForm({
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {fromAI ? (
@@ -116,7 +116,7 @@ function TransferForm({
                 triggerClassName="w-full"
               />
               {fromWallet && (
-                <p className="text-[10px] text-muted-foreground tabular-nums">
+                <p className="text-[10px] text-muted-foreground font-num">
                   {t("common.balance")}: {formatRupiah(fromWallet.balance)}
                 </p>
               )}
@@ -147,7 +147,7 @@ function TransferForm({
                 triggerClassName="w-full"
               />
               {toWallet && (
-                <p className="text-[10px] text-muted-foreground tabular-nums">
+                <p className="text-[10px] text-muted-foreground font-num">
                   {t("common.balance")}: {formatRupiah(toWallet.balance)}
                 </p>
               )}
@@ -170,7 +170,7 @@ function TransferForm({
               autoFocus
             />
             {insufficient && (
-              <p className="text-xs text-amber-600">{t("transferDlg.notEnough")}</p>
+              <p className="text-xs text-warning">{t("transferDlg.notEnough")}</p>
             )}
           </div>
 
@@ -191,7 +191,7 @@ function TransferForm({
                 <span className="text-muted-foreground">
                   {fromWallet.icon} {fromWallet.name}
                 </span>
-                <span className="font-medium tabular-nums">
+                <span className="font-medium font-num">
                   {formatRupiah(fromWallet.balance)} →{" "}
                   {formatRupiah(fromWallet.balance - num)}
                 </span>
@@ -200,7 +200,7 @@ function TransferForm({
                 <span className="text-muted-foreground">
                   {toWallet.icon} {toWallet.name}
                 </span>
-                <span className="font-medium tabular-nums">
+                <span className="font-medium font-num">
                   {formatRupiah(toWallet.balance)} →{" "}
                   {formatRupiah(toWallet.balance + num)}
                 </span>

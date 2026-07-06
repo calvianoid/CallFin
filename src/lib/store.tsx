@@ -99,8 +99,20 @@ function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
 
+/** Demo persona shown when Supabase isn't configured, so the greeting/sidebar
+ *  render a real name instead of "Guest" (matches the Andi persona in mock-data). */
+const MOCK_PROFILE: UserProfile = {
+  id: "u1",
+  full_name: "Andi Pratama",
+  email: "andi@callfin.app",
+  phone: null,
+  avatar_url: null,
+};
+
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(
+    SUPABASE_READY ? null : MOCK_PROFILE,
+  );
   // Start in hydrating state when Supabase is configured so consumers can show
   // skeletons immediately on first paint instead of an empty-state flash.
   const [isHydrating, setIsHydrating] = useState(SUPABASE_READY);

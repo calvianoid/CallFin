@@ -81,7 +81,7 @@ function GoalForm({ onOpenChange, initial, defaultName, defaultTarget }: Omit<Go
   }
 
   return (
-    <DialogContent className="sm:max-w-md">
+    <DialogContent className="top-auto bottom-0 left-0 translate-x-0 translate-y-0 max-w-full w-full rounded-b-none rounded-t-2xl sm:top-1/2 sm:left-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-w-md sm:w-auto sm:rounded-xl">
         <DialogHeader>
           <DialogTitle>
             {isEdit ? t("goalDlg.title.edit") : t("goalDlg.title.add")}
