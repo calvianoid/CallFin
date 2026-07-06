@@ -9,11 +9,11 @@ import { getYearMonth } from "@/lib/utils";
  * compute realistic annual figures.
  */
 export const mockWallets: Wallet[] = [
-  { id: "w2", user_id: "u1", name: "BCA", type: "bank", balance: 47000000, color: "bg-blue-600", icon: "🏦", account_number: "4821" },
+  { id: "w2", user_id: "u1", name: "BCA", type: "bank", balance: 47000000, color: "bg-blue-600", icon: "🏦", subtitle: "Bank" },
   { id: "w1", user_id: "u1", name: "Tunai", type: "cash", balance: 1500000, color: "bg-positive/100", icon: "💵", subtitle: "Cash" },
   { id: "w5", user_id: "u1", name: "Investasi", type: "bank", balance: 215000000, color: "bg-primary/100", icon: "📈", subtitle: "Portofolio" },
   { id: "w3", user_id: "u1", name: "GoPay", type: "ewallet", balance: 800000, color: "bg-primary/100", icon: "📱", subtitle: "E-Wallet" },
-  { id: "w4", user_id: "u1", name: "Kartu Kredit", type: "credit", balance: -3200000, color: "bg-destructive/100", icon: "💳", account_number: "7710" },
+  { id: "w4", user_id: "u1", name: "Kartu Kredit", type: "credit", balance: -3200000, color: "bg-destructive/100", icon: "💳", subtitle: "Kartu Kredit" },
 ];
 
 // 12 months ending at the *current* month, computed relative to today so the
