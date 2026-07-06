@@ -87,7 +87,7 @@ export function WalletsStrip() {
     <div
       ref={stripRef}
       {...dragProps}
-      className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-proximity -mx-4 px-4 sm:mx-0 sm:px-0 cursor-grab active:cursor-grabbing select-none lg:grid lg:grid-cols-5 lg:overflow-visible lg:cursor-default"
+      className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-proximity scroll-pl-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:scroll-pl-0 cursor-grab active:cursor-grabbing select-none lg:grid lg:grid-cols-5 lg:overflow-visible lg:cursor-default"
     >
       {wallets.map((w) => {
         const primary = w.id === primaryId;
