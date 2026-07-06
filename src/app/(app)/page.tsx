@@ -9,6 +9,7 @@
 
 import { DashboardContent } from "@/components/dashboard/DashboardContent";
 import { CommandBarTrigger } from "@/components/chat/CommandBar";
+import { MobileAvatarMenu } from "@/components/layout/MobileAvatarMenu";
 import { useStore } from "@/lib/store";
 import { useTranslation } from "@/lib/i18n/context";
 import { format } from "date-fns";
@@ -43,6 +44,7 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground mt-0.5">{dateStr}</p>
         </div>
         <CommandBarTrigger className="hidden lg:block w-full max-w-md" />
+        <MobileAvatarMenu />
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto">
         <DashboardContent />
