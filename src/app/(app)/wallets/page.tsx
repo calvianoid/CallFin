@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,6 +9,7 @@ import { TransferDialog } from "@/components/forms/TransferDialog";
 import { useStore } from "@/lib/store";
 import { Wallet } from "@/types";
 import { formatRupiah, WALLET_TYPE_LABEL } from "@/lib/mock-data";
+import { useScrollProgress } from "@/lib/use-scroll-progress";
 import { formatMonthLabel } from "@/components/ui/month-picker";
 import {
   Plus, Trash2, ArrowLeftRight, Landmark, Banknote, Smartphone, CreditCard,
@@ -42,6 +43,8 @@ export default function WalletsPage() {
 
   const month = getYearMonth();
   const totalBalance = wallets.reduce((s, w) => s + w.balance, 0);
+  const stripRef = useRef<HTMLDivElement>(null);
+  const scroll = useScrollProgress(stripRef, wallets.length);
 
   const txCount = (walletId: string) => transactions.filter((tx) => tx.wallet_id === walletId).length;
 
@@ -125,7 +128,8 @@ export default function WalletsPage() {
           ))}
         </div>
       ) : (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 lg:grid lg:grid-cols-5">
+        <div className="space-y-2">
+        <div ref={stripRef} className="flex gap-3 overflow-x-auto no-scrollbar scroll-pl-4 -mx-4 px-4 sm:mx-0 sm:px-0 sm:scroll-pl-0 lg:grid lg:grid-cols-5">
           {wallets.map((w) => {
             const Icon = WALLET_ICON[w.type] ?? WalletIcon;
             return (
@@ -159,6 +163,16 @@ export default function WalletsPage() {
               </div>
             );
           })}
+        </div>
+
+        {scroll.visible && (
+          <div className="lg:hidden h-1 rounded-full bg-border/60 overflow-hidden" aria-hidden>
+            <div
+              className="h-full rounded-full bg-muted-foreground/40 transition-[margin-left,width] duration-100"
+              style={{ width: `${scroll.thumbPct}%`, marginLeft: `${scroll.leftPct}%` }}
+            />
+          </div>
+        )}
         </div>
       )}
 

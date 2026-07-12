@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
 import { formatRupiah, WALLET_TYPE_LABEL } from "@/lib/mock-data";
+import { useScrollProgress } from "@/lib/use-scroll-progress";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { Wallet as WalletIcon, Landmark, Banknote, Smartphone, CreditCard } from "lucide-react";
@@ -68,6 +69,7 @@ export function WalletsStrip() {
   const { wallets, isHydrating } = useStore();
   const stripRef = useRef<HTMLDivElement>(null);
   const dragProps = useDragToScroll(stripRef);
+  const bar = useScrollProgress(stripRef, wallets.length);
 
   if (isHydrating && wallets.length === 0) {
     return (
@@ -80,6 +82,7 @@ export function WalletsStrip() {
   }
 
   return (
+    <div className="space-y-2">
     <div
       ref={stripRef}
       {...dragProps}
@@ -108,6 +111,18 @@ export function WalletsStrip() {
           </Link>
         );
       })}
+    </div>
+
+      {/* Custom scroll indicator — only when the strip actually overflows
+          (i.e. mobile/tablet; the lg grid never scrolls). */}
+      {bar.visible && (
+        <div className="lg:hidden h-1 rounded-full bg-border/60 overflow-hidden" aria-hidden>
+          <div
+            className="h-full rounded-full bg-muted-foreground/40 transition-[margin-left,width] duration-100"
+            style={{ width: `${bar.thumbPct}%`, marginLeft: `${bar.leftPct}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
