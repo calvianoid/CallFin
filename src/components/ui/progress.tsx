@@ -10,15 +10,19 @@ function Progress({
   value,
   ...props
 }: ProgressPrimitive.Root.Props) {
+  // NOTE: `className` is forwarded to the TRACK (not the Root). Callers pass the
+  // bar height (e.g. `h-2`) and the fill colour via `[&>div]:bg-…`; putting it on
+  // the track makes the height take effect and targets the indicator (the track's
+  // child div) so the *fill* gets coloured — not the empty rail.
   return (
     <ProgressPrimitive.Root
       value={value}
       data-slot="progress"
-      className={cn("flex flex-wrap gap-3", className)}
+      className="flex flex-wrap gap-3"
       {...props}
     >
       {children}
-      <ProgressTrack>
+      <ProgressTrack className={className}>
         <ProgressIndicator />
       </ProgressTrack>
     </ProgressPrimitive.Root>
@@ -29,7 +33,7 @@ function ProgressTrack({ className, ...props }: ProgressPrimitive.Track.Props) {
   return (
     <ProgressPrimitive.Track
       className={cn(
-        "relative flex h-1 w-full items-center overflow-x-hidden rounded-full bg-muted",
+        "relative flex h-2 w-full items-center overflow-hidden rounded-full bg-muted",
         className
       )}
       data-slot="progress-track"
@@ -45,7 +49,7 @@ function ProgressIndicator({
   return (
     <ProgressPrimitive.Indicator
       data-slot="progress-indicator"
-      className={cn("h-full bg-primary transition-all", className)}
+      className={cn("h-full rounded-full bg-primary transition-all", className)}
       {...props}
     />
   )

@@ -67,7 +67,7 @@ export function BudgetOverview({ budgets }: BudgetOverviewProps) {
               <Progress
                 value={pct}
                 className={cn(
-                  "h-1.5",
+                  "h-2.5",
                   isDanger ? "[&>div]:bg-destructive" : isWarning ? "[&>div]:bg-warning" : "[&>div]:bg-positive"
                 )}
               />

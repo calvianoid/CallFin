@@ -876,7 +876,7 @@ export default function ReportsPage({
                       <span className="text-muted-foreground"> / {formatRupiah(b.limit_amount)}</span>
                     </span>
                   </div>
-                  <Progress value={Math.min(b.pct, 100)} className={cn("h-1.5", isDanger ? "[&>div]:bg-destructive/100" : isWarning ? "[&>div]:bg-warning/100" : "[&>div]:bg-primary")} />
+                  <Progress value={Math.min(b.pct, 100)} className={cn("h-2", isDanger ? "[&>div]:bg-destructive/100" : isWarning ? "[&>div]:bg-warning/100" : "[&>div]:bg-primary")} />
                 </div>
               );
             })}
