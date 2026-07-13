@@ -456,6 +456,8 @@ export const TRANSLATIONS = {
     "txDlg.expense": "📉 Pengeluaran",
     "txDlg.income": "📈 Pemasukan",
     "txDlg.descPlaceholder": "Contoh: Makan siang di warung Padang",
+    "txDlg.addDetail": "Tambah detail (deskripsi, tanggal)",
+    "txDlg.moreCats": "{n} lainnya",
     "txDlg.submit.ai": "Konfirmasi & Simpan",
 
     // Budget Dialog
@@ -1062,6 +1064,8 @@ export const TRANSLATIONS = {
     "txDlg.expense": "📉 Expense",
     "txDlg.income": "📈 Income",
     "txDlg.descPlaceholder": "e.g. Lunch at the Padang restaurant",
+    "txDlg.addDetail": "Add detail (description, date)",
+    "txDlg.moreCats": "{n} more",
     "txDlg.submit.ai": "Confirm & Save",
 
     // Budget Dialog
