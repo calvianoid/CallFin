@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // This project's dev/build output uses NEXT_DIST_DIR=.next-sandbox
+    // (see next.config.ts). It's generated + gitignored — never lint it.
+    ".next-sandbox/**",
   ]),
 ]);
 
