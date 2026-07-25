@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -115,16 +115,16 @@ export default function TransactionsPage() {
     .reduce((s, tx) => s + tx.amount, 0);
   const net = totalIncome - totalExpense;
 
-  // Group filtered transactions by day, newest day first.
-  const groups = useMemo(() => {
-    const map = new Map<string, Transaction[]>();
-    for (const tx of filtered) {
-      const arr = map.get(tx.date);
-      if (arr) arr.push(tx);
-      else map.set(tx.date, [tx]);
-    }
-    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [filtered]);
+  // Group filtered transactions by day, newest day first. Computed inline so
+  // the React Compiler can memoize it (a manual useMemo here can't be preserved
+  // because `filtered` is itself recomputed each render).
+  const groupMap = new Map<string, Transaction[]>();
+  for (const tx of filtered) {
+    const arr = groupMap.get(tx.date);
+    if (arr) arr.push(tx);
+    else groupMap.set(tx.date, [tx]);
+  }
+  const groups = [...groupMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
 
   const dayTotal = (txs: Transaction[]) =>
     txs.reduce((s, tx) => (tx.type === "income" ? s + tx.amount : tx.type === "expense" ? s - tx.amount : s), 0);

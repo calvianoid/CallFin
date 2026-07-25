@@ -11,6 +11,97 @@ import { Plus, Trash2 } from "lucide-react";
 import { cn, getYearMonth } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/context";
 
+type TFn = ReturnType<typeof useTranslation>["t"];
+
+function CategoryCard({
+  c,
+  count,
+  onEdit,
+  onDelete,
+  t,
+}: {
+  c: Category;
+  count: number;
+  onEdit: (c: Category) => void;
+  onDelete: (c: Category) => void;
+  t: TFn;
+}) {
+  return (
+    <div
+      onClick={() => onEdit(c)}
+      className="group relative flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 cursor-pointer hover:border-border/80 hover:bg-muted/30 transition-colors"
+    >
+      <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0", c.color)}>
+        {c.icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{c.name}</p>
+        <p className={cn("text-xs truncate", c.isDefault ? "text-muted-foreground" : "text-primary")}>
+          {c.isDefault ? t("cat.txThisMonth", { n: count }) : t("cat.customTx", { n: count })}
+        </p>
+      </div>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(c);
+        }}
+        className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+        title={t("cat.deleteOne")}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function Section({
+  label,
+  cats,
+  type,
+  isHydrating,
+  monthTxCount,
+  onEdit,
+  onDelete,
+  onAdd,
+  t,
+}: {
+  label: string;
+  cats: Category[];
+  type: CategoryType;
+  isHydrating: boolean;
+  monthTxCount: (name: string) => number;
+  onEdit: (c: Category) => void;
+  onDelete: (c: Category) => void;
+  onAdd: (type: CategoryType) => void;
+  t: TFn;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
+      {isHydrating && cats.length === 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-[68px] rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+          {cats.map((c) => (
+            <CategoryCard key={c.id} c={c} count={monthTxCount(c.name)} onEdit={onEdit} onDelete={onDelete} t={t} />
+          ))}
+          <button
+            onClick={() => onAdd(type)}
+            className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border p-3.5 min-h-[68px] text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="text-[11px]">{t("common.add")}</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CategoriesPage() {
   const { categories, transactions, budgets, deleteCategory, isHydrating } = useStore();
   const { t, locale } = useTranslation();
@@ -39,63 +130,8 @@ export default function CategoriesPage() {
     deleteCategory(c.id);
   }
 
-  function CategoryCard({ c }: { c: Category }) {
-    const n = monthTxCount(c.name);
-    return (
-      <div
-        onClick={() => setDialog({ open: true, editing: c })}
-        className="group relative flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 cursor-pointer hover:border-border/80 hover:bg-muted/30 transition-colors"
-      >
-        <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center text-base shrink-0", c.color)}>
-          {c.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">{c.name}</p>
-          <p className={cn("text-xs truncate", c.isDefault ? "text-muted-foreground" : "text-primary")}>
-            {c.isDefault ? t("cat.txThisMonth", { n }) : t("cat.customTx", { n })}
-          </p>
-        </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleDelete(c);
-          }}
-          className="absolute top-2 right-2 h-6 w-6 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
-          title={t("cat.deleteOne")}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    );
-  }
-
-  function Section({ label, cats, type }: { label: string; cats: Category[]; type: CategoryType }) {
-    return (
-      <div className="space-y-3">
-        <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">{label}</p>
-        {isHydrating && cats.length === 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-[68px] rounded-xl" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {cats.map((c) => (
-              <CategoryCard key={c.id} c={c} />
-            ))}
-            <button
-              onClick={() => setDialog({ open: true, defaultType: type })}
-              className="flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-border p-3.5 min-h-[68px] text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="text-[11px]">{t("common.add")}</span>
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const onEdit = (c: Category) => setDialog({ open: true, editing: c });
+  const onAdd = (type: CategoryType) => setDialog({ open: true, defaultType: type });
 
   return (
     <div className="p-4 sm:p-6 max-w-6xl space-y-6">
@@ -113,8 +149,28 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      <Section label={t("tx.tab.expense")} cats={expenseCats} type="expense" />
-      <Section label={t("tx.tab.income")} cats={incomeCats} type="income" />
+      <Section
+        label={t("tx.tab.expense")}
+        cats={expenseCats}
+        type="expense"
+        isHydrating={isHydrating}
+        monthTxCount={monthTxCount}
+        onEdit={onEdit}
+        onDelete={handleDelete}
+        onAdd={onAdd}
+        t={t}
+      />
+      <Section
+        label={t("tx.tab.income")}
+        cats={incomeCats}
+        type="income"
+        isHydrating={isHydrating}
+        monthTxCount={monthTxCount}
+        onEdit={onEdit}
+        onDelete={handleDelete}
+        onAdd={onAdd}
+        t={t}
+      />
 
       <CategoryDialog
         open={dialog.open}
