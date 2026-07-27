@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Combobox, type ComboboxItem } from "@/components/ui/combobox";
@@ -11,6 +12,8 @@ import {
   type ParseResult,
   type NormalizedTx,
 } from "@/lib/import/money-lover-parser";
+import { parseJagoPdf } from "@/lib/import/jago-parser";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { CategoryDialog } from "@/components/forms/CategoryDialog";
 import { WalletDialog } from "@/components/forms/WalletDialog";
 import { formatRupiah } from "@/lib/mock-data";
@@ -49,7 +52,15 @@ const IMPORT_SOURCES: ImportSource[] = [
     icon: "💰",
     description: "Import dari Money Lover Web (Files → Export → CSV).",
     available: true,
-    fileTypes: ".csv",
+    fileTypes: ".csv,text/csv",
+  },
+  {
+    id: "jago",
+    name: "Bank Jago",
+    icon: "🏦",
+    description: "Import dari PDF Pockets Transaction History Jago.",
+    available: true,
+    fileTypes: ".pdf,application/pdf",
   },
   {
     id: "spendee",
@@ -75,11 +86,13 @@ const IMPORT_SOURCES: ImportSource[] = [
 ];
 
 export function ImportWizard() {
-  const { wallets, categories } = useStore();
+  const { wallets, categories, addTransaction, addTransfer } = useStore();
+  const router = useRouter();
   const [step, setStep] = useState<Step>("source");
   const [source, setSource] = useState<ImportSource | null>(null);
   const [parsed, setParsed] = useState<ParseResult | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   // Mapping state: raw name → real id/name
   const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
@@ -106,7 +119,9 @@ export function ImportWizard() {
   async function handleFile(file: File) {
     setParseError(null);
     try {
-      const result = await parseMoneyLoverCsv(file);
+      const result = source?.id === "jago"
+        ? await parseJagoPdf(file)
+        : await parseMoneyLoverCsv(file);
       setParsed(result);
 
       // Pre-fill category map with auto-suggestions
@@ -115,6 +130,9 @@ export function ImportWizard() {
         const suggested = suggestCategory(raw);
         if (suggested && categories.some((c) => c.name === suggested)) {
           cMap[raw] = suggested;
+        } else if (categories.some((c) => c.name === raw)) {
+          // Raw name is already a real category (e.g. Jago merchant guesses).
+          cMap[raw] = raw;
         }
       }
       setCategoryMap(cMap);
@@ -181,7 +199,46 @@ export function ImportWizard() {
   async function doImport() {
     setImporting(true);
     setProgressPct(0);
+    setImportError(null);
     try {
+      // Demo mode (no Supabase): write straight into the local store, exactly
+      // like the rest of the app. The server action needs an authenticated
+      // Supabase session and would otherwise fail silently here.
+      if (!isSupabaseConfigured()) {
+        const allFailed: { row: number; reason: string }[] = [];
+        let inserted = 0;
+        let pairs = 0;
+
+        finalRows.forEach((r, i) => {
+          try {
+            if (!r.walletId) throw new Error("Dompet belum di-map.");
+            if (r.kind === "transfer") {
+              if (!r.toWalletId) throw new Error("Dompet tujuan belum di-map.");
+              addTransfer(r.walletId, r.toWalletId, r.amount, r.description);
+              pairs += 1;
+              inserted += 1;
+            } else {
+              addTransaction({
+                type: r.kind,
+                amount: r.amount,
+                category: r.category,
+                description: r.description,
+                date: r.date,
+                wallet_id: r.walletId,
+              });
+              inserted += 1;
+            }
+          } catch (err) {
+            allFailed.push({ row: i + 1, reason: err instanceof Error ? err.message : String(err) });
+          }
+          setProgressPct(Math.round(((i + 1) / finalRows.length) * 100));
+        });
+
+        setResult({ total: finalRows.length, inserted, transferPairs: pairs, failed: allFailed });
+        setStep("result");
+        return;
+      }
+
       const { importTransactions } = await import("@/lib/api/import");
       // Send in batches of 25 to update progress
       const BATCH = 25;
@@ -201,7 +258,7 @@ export function ImportWizard() {
       setResult({ total: finalRows.length, inserted, transferPairs: pairs, failed: allFailed });
       setStep("result");
     } catch (err) {
-      setParseError(err instanceof Error ? err.message : String(err));
+      setImportError(err instanceof Error ? err.message : String(err));
     } finally {
       setImporting(false);
     }
@@ -254,7 +311,7 @@ export function ImportWizard() {
           <CardHeader>
             <CardTitle className="text-base">Pilih Sumber Data</CardTitle>
             <CardDescription>
-              Pilih aplikasi yang kamu pakai sebelumnya. Untuk sementara baru Money Lover yang siap.
+              Pilih aplikasi yang kamu pakai sebelumnya. Untuk sementara baru Money Lover & Bank Jago yang siap.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -307,21 +364,27 @@ export function ImportWizard() {
               Upload File dari {source.name}
             </CardTitle>
             <CardDescription>
-              Export transaksi dari {source.name} → File → Download → CSV, lalu upload di sini.
+              {source.id === "jago"
+                ? "Export dari aplikasi Jago → Pocket → Transaction History → Download PDF, lalu upload di sini."
+                : `Export transaksi dari ${source.name} → File → Download → CSV, lalu upload di sini.`}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <label className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-border cursor-pointer hover:border-primary hover:bg-muted/40 transition-colors">
               <Upload className="h-8 w-8 text-muted-foreground" />
               <div className="text-center">
-                <p className="font-medium text-sm">Klik untuk pilih file CSV</p>
+                <p className="font-medium text-sm">
+                  {source.id === "jago" ? "Klik untuk pilih file PDF" : "Klik untuk pilih file CSV"}
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Atau drop file ke sini. Format: CSV export Money Lover.
+                  {source.id === "jago"
+                    ? "Atau drop file ke sini. Format: PDF Transaction History dari Jago."
+                    : "Atau drop file ke sini. Format: CSV export Money Lover."}
                 </p>
               </div>
               <input
                 type="file"
-                accept=".csv,text/csv"
+                accept={source.fileTypes || ".csv"}
                 className="hidden"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -338,11 +401,23 @@ export function ImportWizard() {
             )}
 
             <div className="mt-4 bg-muted rounded-lg p-3 text-xs text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground">Cara export dari Money Lover Web:</p>
-              <p>1. Buka <code className="text-primary">moneylover.me</code> → Transactions</p>
-              <p>2. Klik <strong>3-dot menu</strong> → <strong>Export</strong></p>
-              <p>3. Pilih period & wallet, download CSV</p>
-              <p>4. Upload file-nya di sini</p>
+              {source.id === "jago" ? (
+                <>
+                  <p className="font-medium text-foreground">Cara export dari Jago:</p>
+                  <p>1. Buka aplikasi <strong>Jago</strong> → pilih Pocket</p>
+                  <p>2. <strong>Transaction History</strong> → atur periode/filter</p>
+                  <p>3. <strong>Download</strong> → pilih format <strong>PDF</strong></p>
+                  <p>4. Upload file-nya di sini</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-medium text-foreground">Cara export dari Money Lover Web:</p>
+                  <p>1. Buka <code className="text-primary">moneylover.me</code> → Transactions</p>
+                  <p>2. Klik <strong>3-dot menu</strong> → <strong>Export</strong></p>
+                  <p>3. Pilih period & wallet, download CSV</p>
+                  <p>4. Upload file-nya di sini</p>
+                </>
+              )}
             </div>
 
             <div className="mt-3 flex">
@@ -361,7 +436,7 @@ export function ImportWizard() {
             <CardHeader>
               <CardTitle className="text-base">Mapping Dompet</CardTitle>
               <CardDescription>
-                Pilih dompet di CallFin untuk setiap nama dompet dari Money Lover. Buat baru kalau belum ada.
+                Pilih dompet di CallFin untuk setiap nama dompet dari {source?.name || "sumber"}. Buat baru kalau belum ada.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -491,7 +566,12 @@ export function ImportWizard() {
               <div className="mt-3 bg-muted rounded-lg p-3 text-xs space-y-1 text-muted-foreground">
                 <p className="font-medium text-foreground">Catatan:</p>
                 <p>• Saldo dompet akan otomatis ter-update sesuai transaksi yang masuk.</p>
-                <p>• Transfer pair di Money Lover digabung jadi 1 transaksi transfer di CallFin.</p>
+                {source?.id === "money-lover" && (
+                  <p>• Transfer pair di Money Lover digabung jadi 1 transaksi transfer di CallFin.</p>
+                )}
+                {source?.id === "jago" && (
+                  <p>• &quot;Movement between Pockets&quot; diimpor apa adanya (+ pemasukan / − pengeluaran).</p>
+                )}
                 <p>• Import bersifat append — transaksi existing-mu tidak akan dihapus.</p>
               </div>
             </CardContent>
@@ -509,6 +589,13 @@ export function ImportWizard() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {importError && (
+            <div className="flex items-start gap-2 bg-destructive/10 text-destructive text-sm rounded-lg p-3">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>Import gagal: {importError}</span>
+            </div>
           )}
 
           <div className="flex justify-between gap-2">
@@ -577,7 +664,7 @@ export function ImportWizard() {
               }}>
                 Import Lagi
               </Button>
-              <Button onClick={() => window.location.href = "/transactions"}>
+              <Button onClick={() => router.push("/transactions")}>
                 Lihat Transaksi
               </Button>
             </div>

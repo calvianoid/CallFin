@@ -24,6 +24,8 @@ import {
   Upload,
   Receipt,
   ArrowDownLeft,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { cn, getYearMonth } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -96,6 +98,18 @@ export default function TransactionsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTx, setEditTx] = useState<Transaction | null>(null);
   const [month, setMonth] = useState(() => getYearMonth());
+  const [showFilters, setShowFilters] = useState(false);
+
+  const activeFilterCount =
+    (walletFilter !== "all" ? 1 : 0) +
+    (categoryFilter !== "all" ? 1 : 0) +
+    (filter !== "all" ? 1 : 0);
+
+  function resetFilters() {
+    setWalletFilter("all");
+    setCategoryFilter("all");
+    setFilter("all");
+  }
 
   const inMonth = transactions.filter((tx) => tx.date.startsWith(month));
 
@@ -150,7 +164,7 @@ export default function TransactionsPage() {
           <TxViewToggle active="list" />
           <Link href="/import" className={cn(buttonVariants({ size: "sm", variant: "outline" }), "gap-2")}>
             <Upload className="h-4 w-4" />
-            <span className="hidden md:inline">Import CSV</span>
+            <span className="hidden md:inline">Import</span>
           </Link>
           <Button size="sm" className="gap-2" onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4" />
@@ -162,51 +176,94 @@ export default function TransactionsPage() {
       <MonthPicker value={month} onChange={setMonth} />
 
       {/* Filters + Net */}
-      <div className="flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-3">
-        <div className="relative w-full lg:flex-1 lg:min-w-[180px] lg:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t("tx.search")} className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
+      <div className="space-y-2">
+        {/* Row 1: search · filter toggle · net — always visible */}
         <div className="flex items-center gap-2">
-          <Combobox
-            value={walletFilter}
-            onValueChange={(v) => setWalletFilter(v || "all")}
-            items={[
-              { value: "all", label: t("tx.allWallets") } as ComboboxItem,
-              ...wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon })),
-            ]}
-            placeholder={t("tx.allWallets")}
-            searchPlaceholder={t("common.searchWallet")}
-            emptyMessage={t("common.noWallet")}
-            triggerClassName="w-[150px]"
-          />
-          <Combobox
-            value={categoryFilter}
-            onValueChange={(v) => setCategoryFilter(v || "all")}
-            items={categoryItems}
-            placeholder={t("tx.allCategories")}
-            searchPlaceholder={t("tx.allCategories")}
-            emptyMessage={t("tx.empty")}
-            triggerClassName="w-[160px]"
-          />
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder={t("tx.search")} className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Button
+            variant="outline"
+            size="default"
+            onClick={() => setShowFilters((v) => !v)}
+            className={cn("gap-2 shrink-0", showFilters && "border-primary/50 bg-primary/5")}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("tx.filter")}</span>
+            {activeFilterCount > 0 && (
+              <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-[11px] font-medium text-primary-foreground">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+          <div className="hidden lg:block text-sm text-muted-foreground whitespace-nowrap">
+            {t("tx.net")} {formatMonthLabel(month)}:{" "}
+            <span className={cn("font-num font-semibold tracking-tight", net >= 0 ? "text-positive" : "text-destructive")}>
+              {net >= 0 ? "+" : "-"}
+              {formatRupiah(Math.abs(net)).replace(/^Rp\s?/, "")}
+            </span>
+          </div>
         </div>
-        <div className="-mx-1 px-1 overflow-x-auto">
-          <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-            <TabsList className="w-max">
-              <TabsTrigger value="all">{t("tx.tab.all")}</TabsTrigger>
-              <TabsTrigger value="income">{t("tx.tab.income")}</TabsTrigger>
-              <TabsTrigger value="expense">{t("tx.tab.expense")}</TabsTrigger>
-              <TabsTrigger value="transfer">{t("tx.tab.transfer")}</TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-        <div className="lg:ml-auto text-sm text-muted-foreground whitespace-nowrap">
+
+        {/* Net on smaller screens */}
+        <div className="lg:hidden text-sm text-muted-foreground">
           {t("tx.net")} {formatMonthLabel(month)}:{" "}
           <span className={cn("font-num font-semibold tracking-tight", net >= 0 ? "text-positive" : "text-destructive")}>
             {net >= 0 ? "+" : "-"}
             {formatRupiah(Math.abs(net)).replace(/^Rp\s?/, "")}
           </span>
         </div>
+
+        {/* Row 2: advanced filters — collapsible */}
+        {showFilters && (
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 rounded-xl border border-border/60 bg-muted/20 p-3">
+            <div className="flex items-center gap-2">
+              <Combobox
+                value={walletFilter}
+                onValueChange={(v) => setWalletFilter(v || "all")}
+                items={[
+                  { value: "all", label: t("tx.allWallets") } as ComboboxItem,
+                  ...wallets.map<ComboboxItem>((w) => ({ value: w.id, label: w.name, icon: w.icon })),
+                ]}
+                placeholder={t("tx.allWallets")}
+                searchPlaceholder={t("common.searchWallet")}
+                emptyMessage={t("common.noWallet")}
+                triggerClassName="w-[150px]"
+              />
+              <Combobox
+                value={categoryFilter}
+                onValueChange={(v) => setCategoryFilter(v || "all")}
+                items={categoryItems}
+                placeholder={t("tx.allCategories")}
+                searchPlaceholder={t("tx.allCategories")}
+                emptyMessage={t("tx.empty")}
+                triggerClassName="w-[160px]"
+              />
+            </div>
+            <div className="-mx-1 px-1 overflow-x-auto">
+              <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+                <TabsList className="w-max">
+                  <TabsTrigger value="all">{t("tx.tab.all")}</TabsTrigger>
+                  <TabsTrigger value="income">{t("tx.tab.income")}</TabsTrigger>
+                  <TabsTrigger value="expense">{t("tx.tab.expense")}</TabsTrigger>
+                  <TabsTrigger value="transfer">{t("tx.tab.transfer")}</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            {activeFilterCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={resetFilters}
+                className="gap-1 text-muted-foreground sm:ml-auto"
+              >
+                <X className="h-3.5 w-3.5" />
+                {t("tx.reset")}
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Grouped list */}
